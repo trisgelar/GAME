@@ -10,7 +10,7 @@
   },
   "ml": {
     "models_dir": "models/run_20250925_133309",
-    "default_model": "glcm_lbp_hog_hsv",
+    "default_model": "glcm_hog",
     "ethnicity_classes": {
       "description": "5-class model: Banjar, Bugis, Javanese, Malay, Sundanese",
       "mapping": {

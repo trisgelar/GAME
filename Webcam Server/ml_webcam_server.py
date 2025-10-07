@@ -14,6 +14,7 @@ import pickle
 import numpy as np
 import json
 from pathlib import Path
+from skimage.feature import hog, graycomatrix, graycoprops, local_binary_pattern
 
 class MLEthnicityDetector:
     def __init__(self, models_dir="models/run_20250925_133309"):
@@ -67,69 +68,127 @@ class MLEthnicityDetector:
             self.feature_config = {}
     
     def extract_hog_features(self, image):
-        """Extract HOG features from image"""
-        # Resize image to standard size for HOG
-        resized = cv2.resize(image, (64, 64))
-        gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
+        """Extract HOG features with EXACT training parameters (256x256, 9 bins, (8,8) cell, (2,2) block)"""
+        # Resize to 256x256 - CRITICAL: must match training!
+        resized = cv2.resize(image, (256, 256))
         
-        # HOG parameters (adjust based on your training)
-        hog = cv2.HOGDescriptor((64, 64), (16, 16), (8, 8), (8, 8), 9)
-        features = hog.compute(gray)
-        return features.flatten()
+        # Convert to grayscale
+        if len(image.shape) == 3:
+            gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = resized
+        
+        # EXACT training parameters from exact_training_benchmark.py
+        features = hog(gray, 
+                      orientations=9,
+                      pixels_per_cell=(8, 8),
+                      cells_per_block=(2, 2),
+                      block_norm='L2-Hys',
+                      feature_vector=True,
+                      channel_axis=None)
+        
+        return features.astype(np.float32)
+    
+    def shannon_entropy(self, P):
+        """Calculate Shannon entropy"""
+        # Remove zeros to avoid log(0)
+        P = P[P > 0]
+        return -np.sum(P * np.log2(P))
     
     def extract_glcm_features(self, image):
-        """Extract GLCM features from image"""
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        resized = cv2.resize(gray, (64, 64))
+        """Extract GLCM features with EXACT training parameters (20 features: 4 props×4 angles + 4 entropy)"""
+        # Convert to grayscale
+        if len(image.shape) == 3:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = image
         
-        # GLCM parameters
-        distances = [1, 2, 3]
-        angles = [0, 45, 90, 135]
+        # Resize to 256x256 - CRITICAL: must match training!
+        if gray.shape[0] > 256 or gray.shape[1] > 256:
+            gray = cv2.resize(gray, (256, 256))
+        
+        # EXACT training parameters from exact_training_benchmark.py
+        distances = [1]  # NOT [1,2,3]!
+        angles = [0, 45, 90, 135]  # in degrees
         levels = 256
         
-        # Calculate GLCM
-        glcm = np.zeros((levels, levels), dtype=np.uint8)
-        for distance in distances:
-            for angle in angles:
-                # Simplified GLCM calculation
-                # In practice, you'd use skimage.feature.graycomatrix
-                pass
+        # Convert angles to radians
+        angles_rad = [np.radians(angle) for angle in angles]
         
-        # Extract statistical features from GLCM
-        features = []
-        # Add your GLCM feature extraction logic here
-        # This is a placeholder - implement based on your training code
-        features = np.random.random(20)  # Placeholder
-        return np.array(features)
+        # Calculate GLCM
+        glcm = graycomatrix(gray, 
+                           distances=distances, 
+                           angles=angles_rad,
+                           levels=levels, 
+                           symmetric=True, 
+                           normed=True)
+        
+        # Extract Haralick features (exact from training)
+        properties = ['contrast', 'homogeneity', 'correlation', 'energy']
+        haralick_features = []
+        
+        for prop in properties:
+            feature_values = graycoprops(glcm, prop).ravel()
+            haralick_features.extend(feature_values)
+        
+        # Extract entropy for each angle (exact from training)
+        entropy_features = []
+        for j in range(len(angles_rad)):
+            # Average GLCM across distances for angle j
+            P_avg = np.mean(glcm[:, :, :, j], axis=2)
+            entropy_val = self.shannon_entropy(P_avg)
+            entropy_features.append(entropy_val)
+        
+        # Combine all features (16 Haralick + 4 entropy = 20)
+        all_features = np.concatenate([haralick_features, entropy_features])
+        
+        return all_features.astype(np.float32)
     
     def extract_lbp_features(self, image):
-        """Extract LBP features from image"""
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        resized = cv2.resize(gray, (64, 64))
+        """Extract LBP features with EXACT training parameters (uniform, 10 bins)"""
+        # Convert to grayscale
+        if len(image.shape) == 3:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = image
         
-        # LBP parameters
-        radius = 1
-        n_points = 8 * radius
+        # Resize to 256x256 - CRITICAL: must match training!
+        gray = cv2.resize(gray, (256, 256))
         
-        # Simplified LBP calculation
-        # In practice, you'd use skimage.feature.local_binary_pattern
-        lbp = np.zeros_like(resized)
+        # EXACT training parameters from exact_training_benchmark.py
+        P = 8  # Number of points
+        R = 1.0  # Radius
+        method = 'uniform'
+        bins = P + 2  # 10 bins for uniform method (NOT 256!)
         
-        # Calculate LBP histogram
-        hist, _ = np.histogram(lbp.ravel(), bins=256, range=(0, 256))
+        # Calculate LBP
+        lbp = local_binary_pattern(gray, P, R, method=method)
+        
+        # Calculate histogram (exact from training)
+        hist, _ = np.histogram(lbp.ravel(), bins=bins, range=(0, bins), density=True)
+        
         return hist.astype(np.float32)
     
     def extract_hsv_features(self, image):
-        """Extract HSV color features from image (32 features: 16 bins for S + 16 bins for V)"""
-        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        """Extract HSV color features with EXACT training parameters (32 features: 16 bins for S + 16 bins for V)"""
+        # Convert to HSV (handle both BGR and RGB)
+        if len(image.shape) == 3:
+            # Check if BGR or RGB based on opencv default
+            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        else:
+            raise ValueError("Image must be color (3 channels) for HSV extraction")
         
-        # Extract S and V channel histograms with 16 bins each (32 total features)
-        s_hist = cv2.calcHist([hsv], [1], None, [16], [0, 256])  # Saturation channel
-        v_hist = cv2.calcHist([hsv], [2], None, [16], [0, 256])  # Value channel
+        # EXACT training parameters from exact_training_benchmark.py
+        bins = 16  # 16 bins per channel
+        channels = [1, 2]  # S and V channels only
         
-        # Flatten and normalize
-        features = np.concatenate([s_hist.flatten(), v_hist.flatten()])
-        return features / np.sum(features)  # Normalize
+        features = []
+        for channel in channels:
+            hist = cv2.calcHist([hsv], [channel], None, [bins], [0, 256])
+            hist = hist.flatten() / (hist.sum() + 1e-7)  # Normalize with epsilon to avoid division by zero
+            features.extend(hist)
+        
+        return np.array(features, dtype=np.float32)
     
     def detect_face(self, image):
         """Detect face in image using OpenCV"""
