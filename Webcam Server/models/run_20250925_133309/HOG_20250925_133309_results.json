@@ -1,0 +1,49 @@
+{
+  "name": "HOG",
+  "safe_name": "HOG",
+  "timestamp": "20250925_133309",
+  "logger_name": "feature_set_HOG_20250925_133309",
+  "cv_mean": 94.91633957065618,
+  "cv_std": 1.2950760904276024,
+  "top15": [],
+  "feature_info": {
+    "num_extractors": 1,
+    "total_features": 34596,
+    "extractors": [
+      {
+        "type": "HOG",
+        "description": "Histogram of Oriented Gradients features",
+        "pixels_per_cell": [
+          8,
+          8
+        ],
+        "cells_per_block": [
+          2,
+          2
+        ],
+        "orientations": 9,
+        "feature_dimension": 34596,
+        "extracted_count": 3226,
+        "input_shape": [
+          3226,
+          256,
+          256
+        ],
+        "output_shape": [
+          3226,
+          34596
+        ]
+      }
+    ]
+  },
+  "cv_results": {
+    "mean_accuracy": 94.91633957065618,
+    "std_accuracy": 1.2950760904276024,
+    "cv_scores": "[96.09665428 95.91078067 95.35315985 92.19330855 95.15828678 94.7858473 ]",
+    "cv_folds": 6,
+    "min_accuracy": 92.19330855018588,
+    "max_accuracy": 96.09665427509294
+  },
+  "model_type": "RandomForest",
+  "cv_folds": 6
+}

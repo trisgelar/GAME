@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AudioResource" load_steps=3 format=3]
+
+[ext_resource type="AudioStream" path="res://Assets/Audio/Effects/npc_hello.ogg" id="1_jqgeb"]
+[ext_resource type="Script" path="res://Resources/Audio/AudioResource.gd" id="2_p1tih"]
+
+[resource]
+script = ExtResource("2_p1tih")
+audio_stream = ExtResource("1_jqgeb")
+volume_db = -5.0
+pitch_scale = 1.0
+loop = false
+category = "general"
+description = "Effect: NPCHello"

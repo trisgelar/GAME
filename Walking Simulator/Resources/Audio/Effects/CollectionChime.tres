@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AudioResource" load_steps=3 format=3]
+
+[ext_resource type="AudioStream" path="res://Assets/Audio/Effects/collection_chime.ogg" id="1_p36od"]
+[ext_resource type="Script" path="res://Resources/Audio/AudioResource.gd" id="2_56euo"]
+
+[resource]
+script = ExtResource("2_56euo")
+audio_stream = ExtResource("1_p36od")
+volume_db = -3.0
+pitch_scale = 1.0
+loop = false
+category = "general"
+description = "Effect: CollectionChime"

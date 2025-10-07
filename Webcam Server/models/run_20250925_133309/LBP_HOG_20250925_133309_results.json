@@ -1,0 +1,68 @@
+{
+  "name": "LBP+HOG",
+  "safe_name": "LBP_HOG",
+  "timestamp": "20250925_133309",
+  "logger_name": "feature_set_LBP_HOG_20250925_133309",
+  "cv_mean": 95.3505061623273,
+  "cv_std": 0.8967872015530851,
+  "top15": [],
+  "feature_info": {
+    "num_extractors": 2,
+    "total_features": 34606,
+    "extractors": [
+      {
+        "type": "LBP",
+        "description": "Local Binary Pattern histogram features",
+        "P": 8,
+        "R": 1.0,
+        "method": "uniform",
+        "bins": 10,
+        "feature_dimension": 10,
+        "extracted_count": 3226,
+        "input_shape": [
+          3226,
+          256,
+          256
+        ],
+        "output_shape": [
+          3226,
+          10
+        ]
+      },
+      {
+        "type": "HOG",
+        "description": "Histogram of Oriented Gradients features",
+        "pixels_per_cell": [
+          8,
+          8
+        ],
+        "cells_per_block": [
+          2,
+          2
+        ],
+        "orientations": 9,
+        "feature_dimension": 34596,
+        "extracted_count": 3226,
+        "input_shape": [
+          3226,
+          256,
+          256
+        ],
+        "output_shape": [
+          3226,
+          34596
+        ]
+      }
+    ]
+  },
+  "cv_results": {
+    "mean_accuracy": 95.3505061623273,
+    "std_accuracy": 0.8967872015530851,
+    "cv_scores": "[96.09665428 96.28252788 94.42379182 93.866171   95.90316574 95.53072626]",
+    "cv_folds": 6,
+    "min_accuracy": 93.86617100371747,
+    "max_accuracy": 96.28252788104089
+  },
+  "model_type": "RandomForest",
+  "cv_folds": 6
+}

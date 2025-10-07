@@ -1,0 +1,65 @@
+[gd_resource type="Resource" script_class="AudioConfig" load_steps=2 format=3 uid="uid://b8k2m5n7p9q1r3s5t7u9v1w3x5y7z9"]
+
+[ext_resource type="Script" path="res://Systems/Core/AudioConfig.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+master_volume = 1.0
+ambient_volume = 0.3
+music_volume = 0.5
+effects_volume = 1.0
+voice_volume = 1.0
+footsteps_volume = 1.0
+menu_volume = 0.6
+ui_volume = 0.8
+ambient_audio = {
+"jungle_sounds": "res://Assets/Audio/Ambient/jungle_sounds.ogg",
+"market_ambience": "res://Assets/Audio/Ambient/market_ambience.ogg",
+"mountain_wind": "res://Assets/Audio/Ambient/mountain_wind.ogg"
+}
+menu_audio = {
+"menu_close": "res://Assets/Audio/Menu/menu_close.ogg",
+"menu_open": "res://Assets/Audio/Menu/menu_open.ogg",
+"region_select": "res://Assets/Audio/Menu/region_select.ogg",
+"start_game": "res://Assets/Audio/Menu/start_game.ogg",
+"ui_click": "res://Assets/Audio/Menu/ui_click.ogg",
+"ui_hover": "res://Assets/Audio/Menu/ui_hover.ogg"
+}
+player_actions = {
+"jump": "res://Assets/Audio/Player/Actions/jump.ogg",
+"land": "res://Assets/Audio/Player/Actions/land.ogg",
+"run_start": "res://Assets/Audio/Player/Actions/run_start.ogg",
+"run_stop": "res://Assets/Audio/Player/Actions/run_stop.ogg"
+}
+footstep_audio = {
+"dirt": ["res://Assets/Audio/Player/Footsteps/footstep_dirt_1.ogg", "res://Assets/Audio/Player/Footsteps/footstep_dirt_2.ogg", "res://Assets/Audio/Player/Footsteps/footstep_dirt_3.ogg"],
+"grass": ["res://Assets/Audio/Player/Footsteps/footstep_grass_1.ogg", "res://Assets/Audio/Player/Footsteps/footstep_grass_2.ogg", "res://Assets/Audio/Player/Footsteps/footstep_grass_3.ogg"],
+"stone": ["res://Assets/Audio/Player/Footsteps/footstep_stone_1.ogg", "res://Assets/Audio/Player/Footsteps/footstep_stone_2.ogg", "res://Assets/Audio/Player/Footsteps/footstep_stone_3.ogg"],
+"water": ["res://Assets/Audio/Player/Footsteps/footstep_water_1.ogg", "res://Assets/Audio/Player/Footsteps/footstep_water_2.ogg", "res://Assets/Audio/Player/Footsteps/footstep_water_3.ogg"],
+"wood": ["res://Assets/Audio/Player/Footsteps/footstep_wood_1.ogg", "res://Assets/Audio/Player/Footsteps/footstep_wood_2.ogg", "res://Assets/Audio/Player/Footsteps/footstep_wood_3.ogg"]
+}
+ui_audio = {
+"error": "res://Assets/Audio/UI/error.ogg",
+"inventory_close": "res://Assets/Audio/UI/inventory_close.ogg",
+"inventory_open": "res://Assets/Audio/UI/inventory_open.ogg",
+"item_hover": "res://Assets/Audio/UI/item_hover.ogg",
+"item_select": "res://Assets/Audio/UI/item_select.ogg",
+"notification": "res://Assets/Audio/UI/notification.ogg",
+"success": "res://Assets/Audio/UI/success.ogg"
+}
+effects_audio = {
+"collection_chime": "res://Assets/Audio/Effects/collection_chime.ogg",
+"cultural_narration": "res://Assets/Audio/Effects/cultural_narration.ogg",
+"npc_hello": "res://Assets/Audio/Effects/npc_hello.ogg",
+"transition_sound": "res://Assets/Audio/Effects/transition_sound.ogg"
+}
+enable_3d_audio = true
+enable_reverb = true
+audio_quality = 1
+enable_subtitles = false
+enable_cultural_commentary = true
+preferred_language = "indonesian"
+regional_accent = "standard"
+audio_buffer_size = 1024
+enable_audio_streaming = true
+max_concurrent_sounds = 32

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AudioResource" load_steps=3 format=3]
+
+[ext_resource type="AudioStream" path="res://Assets/Audio/Menu/menu_open.ogg" id="1_fbyun"]
+[ext_resource type="Script" path="res://Resources/Audio/AudioResource.gd" id="2_qq4r2"]
+
+[resource]
+script = ExtResource("2_qq4r2")
+audio_stream = ExtResource("1_fbyun")
+volume_db = -5.0
+pitch_scale = 1.0
+loop = false
+category = "general"
+description = "Menu sound: MenuOpen"

@@ -1,0 +1,12 @@
+[gd_resource type="AudioResource" script_class="AudioResource" load_steps=2 format=3 uid="uid://crbnx73kmr7hv"]
+
+[ext_resource type="Script" path="res://Resources/Audio/AudioResource.gd" id="1_audio_resource"]
+
+[resource]
+script = ExtResource("1_audio_resource")
+audio_stream = null
+volume_db = -8.0
+pitch_scale = 1.0
+loop = false
+category = "footstep"
+description = "Footstep sound on grass surface - variation 1"

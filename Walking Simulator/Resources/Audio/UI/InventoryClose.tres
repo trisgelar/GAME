@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AudioResource" load_steps=3 format=3]
+
+[ext_resource type="AudioStream" path="res://Assets/Audio/UI/inventory_close.ogg" id="1_uhchr"]
+[ext_resource type="Script" path="res://Resources/Audio/AudioResource.gd" id="2_iwprr"]
+
+[resource]
+script = ExtResource("2_iwprr")
+audio_stream = ExtResource("1_uhchr")
+volume_db = -4.0
+pitch_scale = 1.0
+loop = false
+category = "general"
+description = "UI sound: InventoryClose"

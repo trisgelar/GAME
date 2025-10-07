@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AudioResource" load_steps=3 format=3]
+
+[ext_resource type="AudioStream" path="res://Assets/Audio/Ambient/mountain_wind.ogg" id="1_dcbc3"]
+[ext_resource type="Script" path="res://Resources/Audio/AudioResource.gd" id="2_wh237"]
+
+[resource]
+script = ExtResource("2_wh237")
+audio_stream = ExtResource("1_dcbc3")
+volume_db = -10.0
+pitch_scale = 1.0
+loop = true
+category = "general"
+description = "Ambient sound: MountainWind"

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AudioResource" load_steps=3 format=3]
+
+[ext_resource type="AudioStream" path="res://Assets/Audio/Player/Footsteps/footstep_stone_3.ogg" id="1_yvqtp"]
+[ext_resource type="Script" path="res://Resources/Audio/AudioResource.gd" id="2_akpwg"]
+
+[resource]
+script = ExtResource("2_akpwg")
+audio_stream = ExtResource("1_yvqtp")
+volume_db = -6.0
+pitch_scale = 1.0
+loop = false
+category = "general"
+description = "Footstep: stone 3"

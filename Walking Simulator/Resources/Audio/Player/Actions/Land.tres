@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AudioResource" load_steps=3 format=3]
+
+[ext_resource type="AudioStream" path="res://Assets/Audio/Player/Actions/land.ogg" id="1_u4oxj"]
+[ext_resource type="Script" path="res://Resources/Audio/AudioResource.gd" id="2_ov20e"]
+
+[resource]
+script = ExtResource("2_ov20e")
+audio_stream = ExtResource("1_u4oxj")
+volume_db = -6.0
+pitch_scale = 1.0
+loop = false
+category = "general"
+description = "Player action: Land"

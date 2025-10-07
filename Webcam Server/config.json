@@ -1,0 +1,72 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8888,
+    "frame_width": 640,
+    "frame_height": 480,
+    "target_fps": 15,
+    "jpeg_quality": 40,
+    "detection_interval": 15
+  },
+  "ml": {
+    "models_dir": "models/run_20250925_133309",
+    "default_model": "glcm_lbp_hog_hsv",
+    "ethnicity_classes": {
+      "description": "5-class model: Banjar, Bugis, Javanese, Malay, Sundanese",
+      "mapping": {
+        "0": "Indonesia Bagian Tengah (Banjar)",
+        "1": "Indonesia Bagian Timur (Bugis)",
+        "2": "Indonesia Bagian Barat (Malay)", 
+        "3": "Indonesia Bagian Barat (Javanese)",
+        "4": "Indonesia Bagian Barat (Sundanese)"
+      }
+    },
+    "available_models": [
+      {
+        "name": "glcm_hog",
+        "display_name": "GLCM + HOG",
+        "description": "Gray-Level Co-occurrence Matrix + Histogram of Oriented Gradients",
+        "features": ["glcm", "hog"],
+        "enabled": true
+      },
+      {
+        "name": "glcm_lbp_hog",
+        "display_name": "GLCM + LBP + HOG",
+        "description": "GLCM + Local Binary Pattern + HOG",
+        "features": ["glcm", "lbp", "hog"],
+        "enabled": true
+      },
+      {
+        "name": "glcm_lbp_hog_hsv",
+        "display_name": "GLCM + LBP + HOG + HSV",
+        "description": "All features combined (Recommended - 96.44% accuracy)",
+        "features": ["glcm", "lbp", "hog", "hsv"],
+        "enabled": true
+      },
+      {
+        "name": "hsv",
+        "display_name": "HSV Color Only",
+        "description": "Hue-Saturation-Value color features (99.72% accuracy)",
+        "features": ["hsv"],
+        "enabled": true
+      }
+    ]
+  },
+  "camera": {
+    "camera_id": 0,
+    "backend": "opencv",
+    "auto_resize": true
+  },
+  "logging": {
+    "log_dir": "logs",
+    "log_level": "INFO",
+    "console_output": true,
+    "file_output": true,
+    "max_log_files": 7
+  },
+  "performance": {
+    "max_packet_size": 32768,
+    "client_timeout": 30,
+    "enable_performance_monitoring": true
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "name": "HSV",
+  "safe_name": "HSV",
+  "timestamp": "20250925_133309",
+  "logger_name": "feature_set_HSV_20250925_133309",
+  "cv_mean": 99.72118959107807,
+  "cv_std": 0.2573303551089874,
+  "top15": [],
+  "feature_info": {
+    "num_extractors": 1,
+    "total_features": 32,
+    "extractors": [
+      {
+        "type": "ColorHistogram",
+        "description": "Color histogram features from HSV channels",
+        "bins": 16,
+        "channels": [
+          1,
+          2
+        ],
+        "channels_description": "Custom channels",
+        "extracted_count": 3226,
+        "feature_dimension": 32,
+        "input_shape": [
+          3226,
+          256,
+          256,
+          3
+        ],
+        "output_shape": [
+          3226,
+          32
+        ]
+      }
+    ]
+  },
+  "cv_results": {
+    "mean_accuracy": 99.72118959107807,
+    "std_accuracy": 0.2573303551089874,
+    "cv_scores": "[ 99.81412639  99.62825279  99.25650558  99.62825279 100.\n 100.        ]",
+    "cv_folds": 6,
+    "min_accuracy": 99.25650557620817,
+    "max_accuracy": 100.0
+  },
+  "model_type": "RandomForest",
+  "cv_folds": 6
+}

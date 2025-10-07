@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="LoadingConfig" load_steps=2]
+
+[ext_resource type="Script" path="res://Systems/Core/LoadingConfig.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+design_width = 1920
+design_height = 1080
+background_paths = {
+	"papua": "res://Assets/Splash/papua-loading.png",
+	"tambora": "res://Assets/Splash/tambora-loading.png",
+	"pasar": "res://Assets/Splash/pasar-loading.png"
+}
+bar_frame_path = "res://Assets/Splash/loading_bar_empty_frame.png"
+bar_fill_path = "res://Assets/Splash/loading_bar_fill.png"
+bar_width_percent = 0.5
+bar_min_width = 480
+bar_max_width = 960
+bar_height = 36
+bar_y_percent = 0.82
+
+

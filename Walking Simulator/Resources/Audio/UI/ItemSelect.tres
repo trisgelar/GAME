@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AudioResource" load_steps=3 format=3]
+
+[ext_resource type="AudioStream" path="res://Assets/Audio/UI/item_select.ogg" id="1_f5w25"]
+[ext_resource type="Script" path="res://Resources/Audio/AudioResource.gd" id="2_fcg5u"]
+
+[resource]
+script = ExtResource("2_fcg5u")
+audio_stream = ExtResource("1_f5w25")
+volume_db = -3.0
+pitch_scale = 1.0
+loop = false
+category = "general"
+description = "UI sound: ItemSelect"
