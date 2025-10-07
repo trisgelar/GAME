@@ -4,6 +4,7 @@
 
 # Godot 4+ specific ignores
 .godot/
+addons/
 
 # Godot-specific ignores
 *.tmp
@@ -237,5 +238,3 @@ __pycache__/
 htmlcov/
 .coverage
 .coverage.*
-
-docs/*
