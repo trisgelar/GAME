@@ -1,308 +1,209 @@
-# ML Webcam Server Documentation
+# ML Ethnicity Detection Server - Documentation
 
-**Date:** 2025-10-03  
-**Status:** ✅ Completed  
-**Scope:** Complete documentation for the refactored ML webcam server
+**Last Updated:** October 8, 2025
 
-## Overview
+This folder contains documentation for the ML Ethnicity Detection Server.
 
-This documentation covers the complete refactoring of the ML webcam server from a monolithic design to a SOLID-compliant architecture with comprehensive logging, configuration management, and testing.
+---
 
-## Documentation Structure
+## 📚 Documentation Index
 
-### 1. [SOLID Architecture Refactoring](2025-10-03_solid-architecture-refactoring.md)
-- Complete refactoring following SOLID principles
-- Modular component architecture
-- Factory patterns and dependency injection
-- Benefits and improvements achieved
+### October 8, 2025 - Dual Webcam Implementation
 
-### 2. [Comprehensive Logging System](2025-10-03_comprehensive-logging-system.md)
-- Thread-safe singleton logger implementation
-- Multiple output destinations and log levels
-- Specialized logging methods for different operations
-- Performance tracking and monitoring
+**New Features:**
+- **[2025-10-08_continuous-operation.md](2025-10-08_continuous-operation.md)** - Continuous webcam operation documentation
+- **[2025-10-08_dual-webcam-quick-start.md](2025-10-08_dual-webcam-quick-start.md)** - Quick start guide for dual webcam
+- **[2025-10-08_dual-server-stability-fix.md](2025-10-08_dual-server-stability-fix.md)** - Dual server stability improvements
+- **[2025-10-08_webcam-resource-fix.md](2025-10-08_webcam-resource-fix.md)** - Webcam resource conflict fixes
+- **[2025-10-08_feature-verification.md](2025-10-08_feature-verification.md)** - Feature verification tests
+- **[2025-10-08_integration-status.md](2025-10-08_integration-status.md)** - Integration status
+- **[2025-10-08_integration-complete.md](2025-10-08_integration-complete.md)** - Integration completion
+- **[2025-10-08_dual-server-readme.md](2025-10-08_dual-server-readme.md)** - Dual server README
+- **[2025-10-08_topeng-nusantara-integration-guide.md](2025-10-08_topeng-nusantara-integration-guide.md)** - Topeng integration guide
+- **[2025-10-08_ml-server-changes-detailed-explanation.md](2025-10-08_ml-server-changes-detailed-explanation.md)** - ML server changes
 
-### 3. [Model Management System](2025-10-03_model-management-system.md)
-- Configuration-based model management
-- Combined feature models only (removed single-feature models)
-- Model selection and configuration
-- Performance characteristics and usage
+### October 7, 2025 - Multi-Scene Architecture
 
-### 4. [Configuration Management System](2025-10-03_configuration-management-system.md)
-- JSON-based configuration system
-- Configuration validation and management
-- Runtime updates and persistence
-- Integration with all components
+**Architecture:**
+- **[2025-10-07_multi-scene-webcam-architecture.md](2025-10-07_multi-scene-webcam-architecture.md)** - Multi-scene webcam architecture
+- **[2025-10-07_multi-scene-webcam-summary.md](2025-10-07_multi-scene-webcam-summary.md)** - Multi-scene summary
+- **[2025-10-07_ml-server-feature-alignment-fix.md](2025-10-07_ml-server-feature-alignment-fix.md)** - ML feature alignment fixes
 
-### 5. [Testing and Validation](2025-10-03_testing-and-validation.md)
-- Comprehensive testing system
-- Component and integration tests
-- Performance testing and monitoring
-- Test automation and best practices
+### October 3, 2025 - ML System & Refactoring
 
-### 6. [Quick Start Guide](2025-10-03_quick-start-guide.md)
-- Step-by-step setup instructions
-- Configuration and usage examples
-- Troubleshooting and performance tuning
-- API reference and support
+**ML System:**
+- **[2025-10-03_ml-ethnicity-detection-guide.md](2025-10-03_ml-ethnicity-detection-guide.md)** - ML ethnicity detection guide
+- **[2025-10-03_exact-training-parameters-guide.md](2025-10-03_exact-training-parameters-guide.md)** - Exact training parameters
+- **[2025-10-03_model-management-system.md](2025-10-03_model-management-system.md)** - Model management
+- **[2025-10-03_configuration-management-system.md](2025-10-03_configuration-management-system.md)** - Configuration management
 
-## Key Achievements
+**Architecture:**
+- **[2025-10-03_solid-architecture-refactoring.md](2025-10-03_solid-architecture-refactoring.md)** - SOLID architecture refactoring
+- **[2025-10-03_refactoring-summary.md](2025-10-03_refactoring-summary.md)** - Refactoring summary
+- **[2025-10-03_implementation-summary.md](2025-10-03_implementation-summary.md)** - Implementation summary
+- **[2025-10-03_readme-refactored.md](2025-10-03_readme-refactored.md)** - Refactored README
 
-### ✅ SOLID Architecture
-- **Single Responsibility**: Each class has one clear responsibility
-- **Open/Closed**: Extensible through interfaces without modification
-- **Liskov Substitution**: All implementations can substitute their interfaces
-- **Interface Segregation**: Focused, specific interfaces
-- **Dependency Inversion**: High-level modules depend on abstractions
+**Setup & Testing:**
+- **[2025-10-03_quick-start-guide.md](2025-10-03_quick-start-guide.md)** - Quick start guide
+- **[2025-10-03_setup-and-branch-management.md](2025-10-03_setup-and-branch-management.md)** - Setup and branch management
+- **[2025-10-03_testing-and-validation.md](2025-10-03_testing-and-validation.md)** - Testing and validation
+- **[2025-10-03_comprehensive-logging-system.md](2025-10-03_comprehensive-logging-system.md)** - Logging system
 
-### ✅ Comprehensive Logging
-- Thread-safe singleton logger
-- Multiple log levels and outputs
-- Specialized logging for ML operations
-- Performance metrics and monitoring
+**Legacy:**
+- **[README_IMPLEMENTATION_SUMMARY.md](README_IMPLEMENTATION_SUMMARY.md)** - Implementation summary (old format)
 
-### ✅ Model Management
-- Removed single-feature models (HOG, GLCM, LBP)
-- Kept only combined feature models
-- Configuration-based model selection
-- Easy model enable/disable
+---
 
-### ✅ Configuration System
-- JSON-based configuration
-- Runtime updates with persistence
-- Validation and error handling
-- Management tools and scripts
+## 🎯 Quick Links
 
-### ✅ Testing System
-- 8/8 component tests passing
-- Integration and performance testing
-- Configuration validation
-- Error handling verification
+### For Users
 
-## Architecture Overview
+**Getting Started:**
+1. Read: [2025-10-08_dual-webcam-quick-start.md](2025-10-08_dual-webcam-quick-start.md)
+2. Read: [2025-10-03_quick-start-guide.md](2025-10-03_quick-start-guide.md)
+3. See: `../README.md` for main overview
 
-```
-src/
-├── core/                    # Core utilities
-│   ├── logger.py           # Thread-safe singleton logger
-│   └── config_manager.py   # Configuration management
-├── ml/                     # Machine Learning components
-│   ├── face_detector.py    # Face detection interfaces
-│   ├── feature_extractors.py # Feature extraction (HOG, GLCM, LBP, HSV)
-│   ├── model_manager.py    # ML model management
-│   └── ethnicity_detector.py # Main ML detector
-├── camera/                 # Camera interfaces
-│   └── camera_interface.py # Camera abstraction
-├── network/                # Network components
-│   └── udp_server.py       # UDP server implementation
-└── server/                 # Main server
-    └── ml_webcam_server.py # Refactored main server
-```
+**Troubleshooting:**
+- [2025-10-08_webcam-resource-fix.md](2025-10-08_webcam-resource-fix.md)
+- [2025-10-08_dual-server-stability-fix.md](2025-10-08_dual-server-stability-fix.md)
 
-## Quick Start
+### For Developers
 
-### 1. Install Dependencies
+**Architecture:**
+- [2025-10-07_multi-scene-webcam-architecture.md](2025-10-07_multi-scene-webcam-architecture.md)
+- [2025-10-03_solid-architecture-refactoring.md](2025-10-03_solid-architecture-refactoring.md)
+- `../ARCHITECTURE.md` (Parent folder)
+
+**ML System:**
+- [2025-10-03_ml-ethnicity-detection-guide.md](2025-10-03_ml-ethnicity-detection-guide.md)
+- [2025-10-03_exact-training-parameters-guide.md](2025-10-03_exact-training-parameters-guide.md)
+- [2025-10-03_model-management-system.md](2025-10-03_model-management-system.md)
+
+---
+
+## 🚀 Quick Start
+
+### Setup
+
 ```bash
+cd "Webcam Server"
+python -m venv env
+env\Scripts\activate.bat
 pip install -r requirements.txt
 ```
 
-### 2. Test Components
+### Start Server
+
 ```bash
-python test_refactored_server.py
+cd "Webcam Server"
+start_ml_ethnicity_server.bat
 ```
 
-### 3. Start Server
+**Or manually:**
 ```bash
-python run_ml_server.py
+cd "Webcam Server"
+env\Scripts\activate.bat
+python ml_webcam_server.py
 ```
 
-### 4. Manage Configuration
-```bash
-python manage_config.py show
-python manage_config.py set-default glcm_lbp_hog_hsv
-```
+---
 
-## Available Models
+## 🧠 ML Models
 
-- `glcm_hog` - GLCM + HOG features
-- `glcm_lbp_hog` - GLCM + LBP + HOG features
-- `glcm_lbp_hog_hsv` - All features combined (Recommended)
-- `hsv` - HSV color features only
+**Location:** `../models/run_20250925_133309/`
 
-## Configuration
+**Available Models:**
+- `glcm_lbp_hog_hsv` - All features (Best, 96.44% accuracy)
+- `glcm_lbp_hog` - GLCM + LBP + HOG
+- `glcm_hog` - GLCM + HOG
+- `hsv` - HSV color only (99.72% accuracy)
+- `hog` - HOG only
+- `glcm` - GLCM only
+- `lbp` - LBP only
 
-### Default Settings
-- **Host**: 127.0.0.1
-- **Port**: 8888
-- **Resolution**: 480x360
-- **FPS**: 15
-- **Default Model**: glcm_lbp_hog_hsv
+**See:** [2025-10-03_ml-ethnicity-detection-guide.md](2025-10-03_ml-ethnicity-detection-guide.md)
 
-### Configuration File
+---
+
+## 📝 Main Documentation Files
+
+**In Parent Folder:**
+- **`../README.md`** - Main ML server overview
+- **`../README_ML.md`** - ML system documentation
+- **`../README_START_HERE.md`** - Start here guide
+- **`../README_INDEX.md`** - Documentation index
+- **`../QUICK_START.md`** - Quick start reference
+- **`../ARCHITECTURE.md`** - Architecture overview
+
+---
+
+## 🔧 Configuration
+
+### Camera Configuration
+
+**File:** `../config.json`
+
 ```json
 {
-  "server": {
-    "host": "127.0.0.1",
-    "port": 8888,
-    "frame_width": 480,
-    "frame_height": 360,
-    "target_fps": 15,
-    "jpeg_quality": 40,
-    "detection_interval": 30
-  },
-  "ml": {
-    "models_dir": "models/run_20250925_133309",
-    "default_model": "glcm_lbp_hog_hsv",
-    "available_models": [...]
+  "camera": {
+    "camera_id": 0,
+    "notes": "Camera ID 0 = First USB webcam"
   }
 }
 ```
 
-## Testing Results
+**See:** [2025-10-03_configuration-management-system.md](2025-10-03_configuration-management-system.md)
 
-### Component Tests
-- ✅ Logger: All logging methods and levels
-- ✅ ConfigManager: Configuration loading and validation
-- ✅ FeatureExtractors: HOG, HSV, and combined extractors
-- ✅ FaceDetector: Face detection and region extraction
-- ✅ ModelManager: Model loading and prediction
-- ✅ UDPServer: Server startup and client management
-- ✅ Camera: Camera initialization and frame reading
-- ✅ EthnicityDetector: Complete ML pipeline
+---
 
-### Integration Tests
-- ✅ Configuration integration with all components
-- ✅ Logging integration throughout the system
-- ✅ Model integration and prediction pipeline
-- ✅ Server integration and operation
+## 🎯 Key Features
 
-### Performance Tests
-- ✅ Model loading time: ~2-3 seconds
-- ✅ Feature extraction: ~0.1-0.2 seconds
-- ✅ Face detection: ~0.05-0.1 seconds
-- ✅ Server startup: ~5-7 seconds
+### ML Ethnicity Detection
+- Real-time face detection
+- Multiple ML models
+- Automatic detection (every 2 seconds)
+- Confidence scoring
 
-## Usage Examples
+### UDP Video Streaming
+- Port 8888
+- Optimized 640x480 @ 15FPS
+- JPEG compression (Q40)
+- Efficient packet fragmentation
 
-### Start Server
-```bash
-python run_ml_server.py
-```
+### Continuous Operation
+- Camera always active (dedicated hardware)
+- No pause/resume bugs
+- Instant client connections
 
-### Show Configuration
-```bash
-python manage_config.py show
-```
+**See:** [2025-10-08_continuous-operation.md](2025-10-08_continuous-operation.md)
 
-### Change Default Model
-```bash
-python manage_config.py set-default glcm_hog
-```
+---
 
-### Enable/Disable Models
-```bash
-python manage_config.py enable glcm_hog
-python manage_config.py disable hsv
-```
+## 📖 Related Documentation
 
-### Validate Configuration
-```bash
-python manage_config.py validate
-```
+### Root Documentation
+- `../../docs/` - Project-wide dual webcam docs
+- `../../README_SERVERS.md` - Dual server architecture
 
-## Troubleshooting
+### Topeng Server Documentation
+- `../../Topeng Server/docs/` - Topeng server docs
 
-### Common Issues
-1. **Module Not Found**: Install dependencies with `pip install -r requirements.txt`
-2. **Camera Not Found**: Check camera permissions and device ID
-3. **Models Not Loaded**: Verify model files exist in models directory
-4. **Configuration Error**: Check config.json syntax and required sections
+---
 
-### Debug Steps
-1. Check dependencies: `pip list | findstr opencv`
-2. Validate configuration: `python manage_config.py validate`
-3. Test components: `python test_refactored_server.py`
-4. Check logs: `type logs\ml_server_*.log`
+## 🔄 Documentation Organization
 
-## Performance Tuning
+**Date Format:** `YYYY-MM-DD_title-with-hyphens.md`
 
-### For Better Performance
-- Use `hsv` model for fastest processing
-- Reduce `detection_interval` for more frequent detection
-- Increase `jpeg_quality` for better image quality
+**Categories:**
+- **Setup** - Installation and configuration guides
+- **ML System** - Machine learning documentation
+- **Architecture** - System design and structure
+- **Integration** - Component integration guides
+- **Fixes** - Bug fixes and improvements
 
-### For Better Accuracy
-- Use `glcm_lbp_hog_hsv` model (default)
-- Increase `frame_width` and `frame_height`
-- Reduce `target_fps` for more processing time
+---
 
-## Logging
-
-### Log Files
-- `logs/ml_server_YYYYMMDD.log` - All logs
-- `logs/ml_server_errors_YYYYMMDD.log` - Error logs
-
-### Log Levels
-- DEBUG: Detailed debugging information
-- INFO: General information (default)
-- WARNING: Warning messages
-- ERROR: Error conditions
-- CRITICAL: Critical errors
-
-## API Reference
-
-### UDP Messages
-- `REGISTER` - Client registration
-- `UNREGISTER` - Client unregistration
-- `DETECTION_REQUEST` - Request detection result
-- `MODEL_SELECT:<model_name>` - Select ML model
-
-### Responses
-- `REGISTERED` - Registration confirmation
-- `DETECTION_RESULT:<json_data>` - Detection result
-- `MODEL_SELECTED:<model_name>` - Model selection confirmation
-
-## Future Enhancements
-
-### Planned Features
-- Additional feature extractors
-- Model ensemble support
-- Real-time performance optimization
-- Web-based configuration interface
-- Docker containerization
-- Health check endpoints
-
-### Testing Improvements
-- Unit tests with pytest framework
-- Integration tests with test databases
-- Performance benchmarking suite
-- Load testing for multiple clients
-
-## Support
-
-### Documentation
-- All documentation files are in the `docs/` directory
-- Each document covers a specific aspect of the system
-- Examples and code snippets are provided throughout
-
-### Testing
-- `test_refactored_server.py` - Component tests
-- `manage_config.py` - Configuration management
-- `run_ml_server.py` - Server launcher
-
-### Logs
-- Check `logs/` directory for detailed operation logs
-- Error logs are separated for easy debugging
-- Performance metrics are logged for monitoring
-
-## Conclusion
-
-The ML webcam server has been successfully refactored with:
-- ✅ **SOLID architecture** for maintainability and extensibility
-- ✅ **Comprehensive logging** for monitoring and debugging
-- ✅ **Configuration management** for flexibility and ease of use
-- ✅ **Model management** with combined feature models only
-- ✅ **Testing and validation** for reliability and stability
-- ✅ **Documentation** for understanding and maintenance
-
-This refactored system provides a robust, maintainable, and extensible foundation for ML-based ethnicity detection in the walking simulator project.
+**Server Status:** ✅ Production Ready  
+**Port:** 8888  
+**Camera:** ID 0 (USB)  
+**ML Models:** 7 models available

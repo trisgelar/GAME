@@ -276,6 +276,7 @@ class MLWebcamServer:
         self.server_socket = None
         self.clients = set()
         self.camera = None
+        self.camera_backend = cv2.CAP_DSHOW  # Default backend
         self.running = False
         self.sequence_number = 0
         
@@ -322,24 +323,118 @@ class MLWebcamServer:
             print(f"❌ Error loading config: {e}, using defaults")
             return {}
         
-    def initialize_camera(self):
+    def initialize_camera(self, camera_id=None):
+        """Initialize camera with specified ID or from config"""
+        if camera_id is None:
+            camera_id = self.config.get('camera', {}).get('camera_id', 0)
+        
         print("🎥 Initializing ML-enhanced camera...")
-        camera_id = self.config.get('camera', {}).get('camera_id', 0)
-        self.camera = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
+        print(f"🔍 Attempting to open camera ID: {camera_id}")
+        self.camera_id = camera_id  # Store camera ID
         
-        if self.camera.isOpened():
-            self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
-            self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
-            self.camera.set(cv2.CAP_PROP_FPS, self.target_fps)
-            self.camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-            
-            ret, frame = self.camera.read()
-            if ret and frame is not None:
-                print(f"✅ Camera ready: {self.frame_width}x{self.frame_height} @ {self.target_fps}FPS")
-                print(f"🤖 ML Models loaded: {list(self.ml_detector.models.keys())}")
-                return True
+        # First, try a quick test to see if camera is available
+        print("🔍 Testing camera availability...")
+        test_camera = cv2.VideoCapture(camera_id)
+        if not test_camera.isOpened():
+            print("❌ Camera is not available - may be in use by another application")
+            test_camera.release()
+            return False
+        test_camera.release()
+        print("✅ Camera appears to be available")
         
-        print("❌ Camera initialization failed")
+        # Try different backends in order of preference
+        backends = [cv2.CAP_DSHOW, cv2.CAP_ANY]
+        
+        for backend in backends:
+            try:
+                backend_name = "DSHOW" if backend == cv2.CAP_DSHOW else "DEFAULT"
+                print(f"🔍 Trying backend: {backend_name}")
+                
+                if backend == cv2.CAP_ANY:
+                    self.camera = cv2.VideoCapture(camera_id)
+                else:
+                    self.camera = cv2.VideoCapture(camera_id, backend)
+                
+                print(f"🔍 Camera object created, checking if opened...")
+                if self.camera.isOpened():
+                    print(f"✅ Camera opened with backend {backend_name}")
+                    
+                    print(f"🔍 Setting camera properties...")
+                    self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
+                    self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
+                    self.camera.set(cv2.CAP_PROP_FPS, self.target_fps)
+                    self.camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                    
+                    print(f"🔍 Attempting to read first frame...")
+                    # Add timeout for frame reading
+                    import time
+                    start_time = time.time()
+                    ret, frame = self.camera.read()
+                    read_time = time.time() - start_time
+                    
+                    if ret and frame is not None:
+                        print(f"✅ Camera ready: {self.frame_width}x{self.frame_height} @ {self.target_fps}FPS (backend: {backend_name})")
+                        print(f"🤖 ML Models loaded: {list(self.ml_detector.models.keys())}")
+                        self.camera_backend = backend  # Store the working backend
+                        
+                        # Small delay to ensure camera is fully ready
+                        time.sleep(0.5)
+                        print("✅ Camera initialization complete - ready for clients")
+                        return True
+                    else:
+                        print(f"❌ Camera opened with backend {backend} but failed to read frame (took {read_time:.2f}s)")
+                        self.camera.release()
+                else:
+                    print(f"❌ Failed to open camera with backend {backend}")
+            except Exception as e:
+                print(f"❌ Error with backend {backend}: {e}")
+                if self.camera:
+                    self.camera.release()
+        
+        print("❌ Camera initialization failed with all backends")
+        return False
+    
+    def reinitialize_camera(self):
+        """Robust camera reinitialization with fallback backends"""
+        print("🔄 Reinitializing camera...")
+        
+        # Use stored camera_id or default to 0
+        camera_id = getattr(self, 'camera_id', 0)
+        
+        # Try the stored backend first, then fallback to others
+        backends_to_try = [self.camera_backend, cv2.CAP_DSHOW, cv2.CAP_ANY]
+        
+        for backend in backends_to_try:
+            try:
+                if backend == cv2.CAP_ANY:
+                    self.camera = cv2.VideoCapture(camera_id)
+                else:
+                    self.camera = cv2.VideoCapture(camera_id, backend)
+                
+                if self.camera.isOpened():
+                    self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                    self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                    self.camera.set(cv2.CAP_PROP_FPS, 15)
+                    self.camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                    
+                    # Test frame reading
+                    ret, frame = self.camera.read()
+                    if ret and frame is not None:
+                        backend_name = "DSHOW" if backend == cv2.CAP_DSHOW else "DEFAULT"
+                        print(f"✅ Camera reinitialized with backend: {backend_name}")
+                        self.camera_backend = backend  # Update stored backend
+                        return True
+                    else:
+                        print(f"❌ Camera opened with backend {backend} but failed to read frame")
+                        self.camera.release()
+                else:
+                    print(f"❌ Failed to open camera with backend {backend}")
+            except Exception as e:
+                print(f"❌ Error with backend {backend}: {e}")
+                if self.camera:
+                    self.camera.release()
+        
+        print("❌ Failed to reinitialize camera with any backend")
         return False
     
     def log_ml_status(self):
@@ -372,8 +467,12 @@ class MLWebcamServer:
         }
     
     def start_server(self):
+        # ✅ DUAL WEBCAM: Initialize camera immediately (dedicated hardware)
+        print("🎥 Initializing dedicated camera for ML server...")
         if not self.initialize_camera():
+            print("❌ Failed to initialize camera! Check if Camera 0 is available.")
             return
+        print("✅ Camera initialized - ML server ready!")
         
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -383,6 +482,8 @@ class MLWebcamServer:
         print(f"🚀 ML-Enhanced UDP Server: {self.host}:{self.port}")
         print(f"📊 Settings: {self.frame_width}x{self.frame_height}, {self.target_fps}FPS, Q{self.jpeg_quality}")
         print(f"🧠 ML Detection: {'Enabled' if self.detection_enabled else 'Disabled'}")
+        print(f"🎥 Camera Status: Active and ready (dedicated hardware)")
+        print(f"🔗 Waiting for client connections...")
         
         self.running = True
         
@@ -409,13 +510,43 @@ class MLWebcamServer:
                 if message == "REGISTER":
                     if addr not in self.clients:
                         self.clients.add(addr)
-                        print(f"✅ Client: {addr} (Total: {len(self.clients)})")
-                    
-                    self.server_socket.sendto("REGISTERED".encode('utf-8'), addr)
+                        print(f"✅ Client registered: {addr} (Total: {len(self.clients)})")
+                        
+                        # ✅ DUAL WEBCAM: Camera already initialized at startup
+                        # Just send confirmation
+                        self.server_socket.sendto("REGISTERED".encode('utf-8'), addr)
+                    else:
+                        # Client already registered, send REGISTERED immediately
+                        self.server_socket.sendto("REGISTERED".encode('utf-8'), addr)
                 
                 elif message == "UNREGISTER":
                     self.clients.discard(addr)
-                    print(f"❌ Client left: {addr}")
+                    print(f"❌ Client unregistered: {addr} (Total: {len(self.clients)})")
+                    
+                    # ✅ DUAL WEBCAM: Keep camera running (don't release)
+                    # With dedicated webcam, camera stays active
+                    if len(self.clients) == 0:
+                        print("📹 No clients connected - camera stays active (dedicated hardware)")
+
+                elif message == "RELEASE_CAMERA":
+                    # Force release camera resource (for backward compatibility)
+                    # With dual webcams, this shouldn't be needed anymore
+                    print(f"📹 Camera release requested by {addr} (Note: Using dedicated camera)")
+                    try:
+                        if self.camera and self.camera.isOpened():
+                            self.camera.release()
+                            print("✅ Camera released")
+                        
+                        # Wait a moment for camera to be fully released
+                        time.sleep(0.5)
+                        
+                        # Reinitialize camera with robust fallback
+                        if self.reinitialize_camera():
+                            print("✅ Camera reinitialized successfully")
+                        else:
+                            print("❌ Failed to reinitialize camera")
+                    except Exception as e:
+                        print(f"⚠️ Camera release error: {e}")
                 
                 elif message.startswith("DETECTION_REQUEST"):
                     # Handle detection request from client
@@ -522,24 +653,22 @@ class MLWebcamServer:
     
     def _broadcast_frames(self):
         last_frame_time = 0
-        camera_paused = False
         
         while self.running:
             current_time = time.time()
             
-            # ✅ FIX: Pause camera when no clients to save resources
+            # ✅ DUAL WEBCAM: Camera stays active continuously (no pause)
+            # With dedicated webcam, we don't need to pause/resume
             if len(self.clients) == 0:
-                if not camera_paused:
-                    print("⏸️  No clients connected - camera paused (saves CPU/bandwidth)")
-                    camera_paused = True
-                time.sleep(0.5)  # Check less frequently when idle
+                # Just skip sending, but keep camera running
+                time.sleep(0.1)  # Light sleep to avoid busy loop
                 continue
             
-            # ✅ Resume camera when client connects
-            if camera_paused:
-                print(f"▶️  Client(s) connected ({len(self.clients)}) - camera resumed")
-                camera_paused = False
-                last_frame_time = 0  # Reset timing
+            # Check if camera is initialized
+            if self.camera is None:
+                print("⚠️ Camera not initialized yet, waiting...")
+                time.sleep(0.1)
+                continue
             
             if current_time - last_frame_time < self.frame_send_time:
                 time.sleep(0.01)
@@ -547,15 +676,22 @@ class MLWebcamServer:
             
             ret, frame = self.camera.read()
             if not ret:
-                break
+                print("❌ Failed to read frame from camera - attempting to reinitialize...")
+                try:
+                    # Try to reinitialize camera
+                    self.camera.release()
+                    time.sleep(0.5)
+                    if self.reinitialize_camera():
+                        print("✅ Camera reinitialized after read failure")
+                        continue  # Try reading again
+                    else:
+                        print("❌ Failed to reinitialize camera after read failure")
+                        break
+                except Exception as e:
+                    print(f"❌ Camera reinitialization error: {e}")
+                    break
             
-            # ML Detection (every N frames)
-            if self.detection_enabled and self.frame_count % self.detection_interval == 0:
-                ethnicity, confidence = self.ml_detector.predict_ethnicity(frame, self.current_model)
-                if ethnicity:
-                    self.last_detection_result = (ethnicity, confidence)
-                    print(f"🧠 Detection: {ethnicity} (confidence: {confidence:.2f})")
-            
+            # No automatic ML detection - only when requested via DETECTION_REQUEST command
             self.frame_count += 1
             
             # Encode and send frame
@@ -566,9 +702,17 @@ class MLWebcamServer:
                 frame_data = encoded_img.tobytes()
                 self.send_frame_to_clients(frame_data)
                 last_frame_time = current_time
+                
+                # Debug: Print frame sending info (like Topeng server)
+                if self.frame_count % 60 == 0:  # Print every 60 frames (about every 4 seconds at 15fps)
+                    print(f"📤 Frame {self.frame_count}: {len(frame_data)//1024}KB → {len(self.clients)} clients")
+            else:
+                print("❌ Failed to encode frame as JPEG")
     
     def send_frame_to_clients(self, frame_data):
         if not frame_data or len(self.clients) == 0:
+            if len(self.clients) == 0:
+                print("⚠️ No clients to send frame to")
             return
         
         self.sequence_number = (self.sequence_number + 1) % 65536
@@ -584,17 +728,24 @@ class MLWebcamServer:
                     start_pos = packet_index * payload_size
                     end_pos = min(start_pos + payload_size, frame_size)
                     
-                    header = struct.pack("!III", self.sequence_number, total_packets, packet_index)
+                    header = struct.pack("!III", self.sequence_number, packet_index, total_packets)
                     udp_packet = header + frame_data[start_pos:end_pos]
                     
                     self.server_socket.sendto(udp_packet, client_addr)
-                
+                    
+                # Debug: Confirm frame sent
                 if self.sequence_number % 60 == 1:
-                    print(f"📤 Frame {self.sequence_number}: {frame_size//1024}KB → {len(self.clients)} clients")
+                    print(f"📤 Sent frame {self.sequence_number} to {client_addr}")
+                
+                # Frame sending debug moved to _broadcast_frames function
                     
             except Exception as e:
                 print(f"❌ Send error {client_addr}: {e}")
                 self.clients.discard(client_addr)
+                # Don't print too many errors for the same client
+                if not hasattr(self, '_last_error_client') or self._last_error_client != client_addr:
+                    print(f"⚠️ Client {client_addr} disconnected due to send error")
+                    self._last_error_client = client_addr
     
     def stop_server(self):
         print("⏹️ Stopping ML server...")
