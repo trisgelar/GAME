@@ -3,7 +3,6 @@ extends Node
 signal frame_received(texture: ImageTexture)
 signal connection_changed(connected: bool)
 signal error_message(message: String)
-signal detection_result_received(ethnicity: String, confidence: float, model: String)
 
 var udp_client: PacketPeerUDP
 var is_connected: bool = false
@@ -28,19 +27,58 @@ func _ready():
 	udp_client = PacketPeerUDP.new()
 	print("🎮 Optimized UDP client ready")
 
+func connect_to_server(port: int = 8888):
+	"""Connect to webcam server on specified port"""
+	print("=== SharedWebcamManager.connect_to_server(port=%d) ===" % port)
+	
+	server_port = port
+	server_host = "127.0.0.1"
+	
+	# Clean up any existing connection
+	disconnect_from_server()
+	
+	# Wait a moment for cleanup
+	await get_tree().create_timer(0.2).timeout
+	
+	# Create new UDP client
+	udp_client = PacketPeerUDP.new()
+	
+	# Connect to server
+	var err = udp_client.connect_to_host(server_host, server_port)
+	if err != OK:
+		_emit_error("Failed to connect to %s:%d (error %d)" % [server_host, server_port, err])
+		return
+	
+	print("✅ Connected to webcam server: %s:%d" % [server_host, server_port])
+	
+	# Send REGISTER command
+	var register_message = "REGISTER".to_utf8_buffer()
+	var send_err = udp_client.put_packet(register_message)
+	if send_err != OK:
+		_emit_error("Failed to send REGISTER packet (error %d)" % send_err)
+		return
+	
+	print("📤 Sent REGISTER to server")
+	
+	# Start processing
+	set_process(true)
+	is_connected = true
+	connection_changed.emit(true)
+	
+	# Reset stats
+	_reset_stats()
+
 func connect_to_webcam_server():
+	"""Legacy method for compatibility"""
 	if is_connected:
-		print("⚠️ Already connected to server, skipping connection")
 		return
 		
-	print("🔄 Connecting to webcam server on port %d..." % server_port)
+	print("🔄 Connecting to optimized server...")
 	
 	var error = udp_client.connect_to_host(server_host, server_port)
 	if error != OK:
 		_emit_error("UDP setup failed: " + str(error))
 		return
-	
-	print("✅ UDP connection established to %s:%d" % [server_host, server_port])
 	
 	var registration_message = "REGISTER".to_utf8_buffer()
 	var send_result = udp_client.put_packet(registration_message)
@@ -51,9 +89,9 @@ func connect_to_webcam_server():
 	
 	print("📤 Registration sent...")
 	
-	# Optimized waiting with longer timeout for camera initialization
+	# Optimized waiting with shorter timeout
 	var timeout = 0
-	var max_timeout = 300  # 5 seconds at 60fps (allows time for camera init)
+	var max_timeout = 90  # 1.5 seconds at 60fps
 	var confirmed = false
 	
 	while timeout < max_timeout and not confirmed:
@@ -67,10 +105,6 @@ func connect_to_webcam_server():
 			if message == "REGISTERED":
 				confirmed = true
 				print("✅ Connected to optimized server!")
-			elif message == "CAMERA_ERROR":
-				_emit_error("Camera initialization failed on server")
-				udp_client.close()
-				return
 	
 	if confirmed:
 		is_connected = true
@@ -90,12 +124,8 @@ func _process(_delta):
 	while processed < max_packets_per_frame and udp_client.get_available_packet_count() > 0:
 		var packet = udp_client.get_packet()
 		if packet.size() >= 12:
-			# Video frame packet
 			packets_received += 1
 			process_packet(packet)
-		elif packet.size() > 0:
-			# Text message packet (DETECTION_RESULT, etc.)
-			process_text_message(packet)
 		processed += 1
 	
 	# Less frequent cleanup
@@ -200,17 +230,14 @@ func display_frame(frame_data: PackedByteArray):
 		print("❌ Frame decode error: ", error)
 
 func disconnect_from_server():
-	print("🔄 Disconnecting from webcam server...")
 	if is_connected:
 		# Send camera release command first to free webcam resource
 		var release_message = "RELEASE_CAMERA".to_utf8_buffer()
 		udp_client.put_packet(release_message)
-		print("📤 Sent RELEASE_CAMERA command")
 		
 		# Send unregister immediately (no await in non-async function)
 		var unregister_message = "UNREGISTER".to_utf8_buffer()
 		udp_client.put_packet(unregister_message)
-		print("📤 Sent UNREGISTER command")
 	
 	is_connected = false
 	udp_client.close()
@@ -228,59 +255,8 @@ func _reset_stats():
 func get_connection_status() -> bool:
 	return is_connected
 
-func process_text_message(packet: PackedByteArray):
-	"""Process text messages from server (DETECTION_RESULT, etc.)"""
-	var message = packet.get_string_from_utf8()
-	print("📥 Received message from server: " + message)
-	
-	if message.begins_with("DETECTION_RESULT:"):
-		# Parse detection result
-		var json_str = message.substr(17)  # Remove "DETECTION_RESULT:" prefix
-		var json = JSON.new()
-		var parse_result = json.parse(json_str)
-		
-		if parse_result == OK:
-			var result_data = json.data
-			if result_data.has("ethnicity") and result_data.has("confidence"):
-				var ethnicity = result_data["ethnicity"]
-				var confidence = result_data["confidence"]
-				var model = result_data.get("model", "unknown")
-				
-				print("🧠 Detection result: " + ethnicity + " (" + str(confidence) + "%)")
-				detection_result_received.emit(ethnicity, confidence, model)
-			else:
-				print("⚠️ Invalid detection result format")
-		else:
-			print("⚠️ Failed to parse detection result JSON")
-	
-	elif message.begins_with("DETECTION_ERROR:"):
-		# Handle detection error
-		var json_str = message.substr(16)  # Remove "DETECTION_ERROR:" prefix
-		var json = JSON.new()
-		var parse_result = json.parse(json_str)
-		
-		if parse_result == OK:
-			var error_data = json.data
-			if error_data.has("error"):
-				print("❌ Detection error: " + error_data["error"])
-				error_message.emit("Detection error: " + error_data["error"])
-
-func send_detection_request():
-	"""Send DETECTION_REQUEST command to ML server"""
-	if not is_connected:
-		print("⚠️ Cannot send detection request - not connected to server")
-		return
-	
-	var detection_message = "DETECTION_REQUEST".to_utf8_buffer()
-	var send_result = udp_client.put_packet(detection_message)
-	
-	if send_result == OK:
-		print("📤 Sent DETECTION_REQUEST command to ML server")
-	else:
-		print("❌ Failed to send DETECTION_REQUEST command: " + str(send_result))
-
 func _emit_error(message: String):
-	print("WebcamManager Error: " + message)
+	print("SharedWebcamManager Error: " + message)
 	error_message.emit(message)
 
 func _notification(what):

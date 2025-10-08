@@ -41,9 +41,10 @@ except Exception as e:
 
 
 class UDPWebcamServer:
-    def __init__(self, host='127.0.0.1', port=8888, masks_folder: str = None):
+    def __init__(self, host='127.0.0.1', port=8888, masks_folder: str = None, camera_id: int = 0):
         self.host = host
         self.port = port
+        self.camera_id = camera_id  # Store camera ID for this server
         self.server_socket = None
         self.clients = set()
         self.camera = None
@@ -101,12 +102,12 @@ class UDPWebcamServer:
         self.frame_send_time = 1.0 / self.target_fps
 
     def initialize_camera(self):
-        print("🎥 Initializing optimized camera...")
+        print(f"🎥 Initializing optimized camera (ID: {self.camera_id})...")
         # Use CAP_DSHOW on Windows for lower latency; if fails, fallback
         try:
-            self.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+            self.camera = cv2.VideoCapture(self.camera_id, cv2.CAP_DSHOW)
         except Exception:
-            self.camera = cv2.VideoCapture(0)
+            self.camera = cv2.VideoCapture(self.camera_id)
 
         if self.camera.isOpened():
             # Set optimized resolution
@@ -227,18 +228,19 @@ class UDPWebcamServer:
                             print(f"⚠️ Error releasing camera: {e}")
 
                 elif message == "RELEASE_CAMERA":
-                    # Force release camera resource
-                    print(f"📹 Camera release requested by {addr}")
+                    # Force release camera resource (for backward compatibility)
+                    # With dual webcams, this shouldn't be needed anymore
+                    print(f"📹 Camera release requested by {addr} (Note: Using dedicated camera {self.camera_id})")
                     try:
                         if self.camera and self.camera.isOpened():
                             self.camera.release()
                             print("✅ Camera released")
-                        # Reinitialize camera
-                        self.camera = cv2.VideoCapture(0)
+                        # Reinitialize camera with the same camera_id
+                        self.camera = cv2.VideoCapture(self.camera_id)
                         if self.camera.isOpened():
-                            print("✅ Camera reinitialized")
+                            print(f"✅ Camera {self.camera_id} reinitialized")
                         else:
-                            print("❌ Failed to reinitialize camera")
+                            print(f"❌ Failed to reinitialize camera {self.camera_id}")
                     except Exception as e:
                         print(f"⚠️ Camera release error: {e}")
 
@@ -529,11 +531,13 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8889, help="UDP port (default: 8889)")
     parser.add_argument("--host", default="127.0.0.1", help="Host address (default: 127.0.0.1)")
     parser.add_argument("--masks_folder", default=None, help="Masks folder (default: auto-detect)")
+    parser.add_argument("--camera_id", type=int, default=1, help="Camera ID (default: 1 for second webcam)")
     args = parser.parse_args()
     
     print("=== Topeng Mask UDP Webcam Server ===")
     print(f"🎭 Port: {args.port}")
     print(f"📡 Host: {args.host}")
+    print(f"📹 Camera ID: {args.camera_id}")
     # No hardcoded folder here; UDPWebcamServer will try to autodetect "mask"/"masks" next to this script.
-    server = UDPWebcamServer(host=args.host, port=args.port, masks_folder=args.masks_folder)
+    server = UDPWebcamServer(host=args.host, port=args.port, masks_folder=args.masks_folder, camera_id=args.camera_id)
     server.start_server()

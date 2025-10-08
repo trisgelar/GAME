@@ -6,12 +6,27 @@
 
 ## 🎯 Overview
 
-This project uses **TWO separate webcam servers** running concurrently:
+This project uses **TWO separate webcam servers** running concurrently with **dedicated USB webcams**:
 
-| Server | Port | Purpose | numpy Version | Location |
-|--------|------|---------|--------------|----------|
-| **Ethnicity ML** | 8888 | Ethnicity detection using ML models | 2.2.6 | `Webcam Server/` |
-| **Topeng Masks** | 8889 | Face mask overlay with MediaPipe | 1.24-1.26 | `Topeng Server/` |
+| Server | Port | Camera ID | Purpose | numpy Version | Location |
+|--------|------|-----------|---------|--------------|----------|
+| **Ethnicity ML** | 8888 | **0** | Ethnicity detection using ML models | 2.2.6 | `Webcam Server/` |
+| **Topeng Masks** | 8889 | **1** | Face mask overlay with MediaPipe | 1.24-1.26 | `Topeng Server/` |
+
+### 🎥 Dual Webcam Setup (Recommended)
+
+**✅ RECOMMENDED:** Use 2 separate USB webcams for maximum reliability!
+
+- **Camera 0** (First USB webcam) → Ethnicity ML Server (Port 8888)
+- **Camera 1** (Second USB webcam) → Topeng Mask Server (Port 8889)
+
+**Benefits:**
+- ✅ No resource conflicts
+- ✅ No camera release/reinit complexity
+- ✅ Instant scene switching
+- ✅ Rock-solid stability
+
+**See:** [`DUAL_WEBCAM_SETUP.md`](DUAL_WEBCAM_SETUP.md) for complete setup guide
 
 ---
 
@@ -31,24 +46,45 @@ This project uses **TWO separate webcam servers** running concurrently:
 
 ## 🚀 Quick Start
 
-### Option 1: Start Both Servers (Recommended)
+### ✅ With Dual Webcams (Recommended)
 
-Double-click: **`start_both_servers.bat`**
+**Hardware:** 2 USB webcams connected
+
+**Step 1: Detect Cameras**
+```bash
+cd "Webcam Server"
+env\Scripts\activate.bat
+python detect_cameras.py
+```
+
+Expected: "✅ 2 cameras detected - Ready for dual server setup!"
+
+**Step 2: Start Both Servers**
+```bash
+start_dual_webcam_servers.bat
+```
 
 **This opens 2 windows:**
-1. ✅ Ethnicity ML Server (Port 8888)
-2. ✅ Topeng Mask Server (Port 8889)
+1. ✅ Ethnicity ML Server (Port 8888, Camera 0)
+2. ✅ Topeng Mask Server (Port 8889, Camera 1)
 
 **Keep both windows open while playing the game.**
 
 ---
 
-### Option 2: Start Individual Servers
+### ⚠️ With Single Webcam (Legacy - Not Recommended)
+
+**If you only have 1 webcam:** The servers will share camera access with release/reinit logic. This is less reliable.
+
+**Start Both Servers:**
+Double-click: **`start_both_servers.bat`** (if exists)
+
+OR start individually:
 
 **Ethnicity ML Server:**
 ```bash
 cd "Webcam Server"
-start_ethnicity_server.bat
+start_ml_server.bat
 ```
 
 **Topeng Mask Server:**
@@ -56,6 +92,8 @@ start_ethnicity_server.bat
 cd "Topeng Server"
 start_topeng_server.bat
 ```
+
+**Note:** With single webcam, scene switching requires camera release commands and may have delays.
 
 ---
 
@@ -429,19 +467,34 @@ python -c "import mediapipe; print('OK')"
 
 ## 📚 Documentation Index
 
+### Quick Links
+
+**Main Documentation:**
+- **`docs/`** - Root project documentation
+- **`docs/2025-10-08_start-servers-guide.md`** - How to start servers
+- **`docs/2025-10-08_dual-webcam-setup.md`** - Dual webcam setup guide
+- **`DOCUMENTATION_ORGANIZATION.md`** - Documentation organization summary
+
 ### Server Documentation
 
-- **`Webcam Server/README_ML.md`** - ML ethnicity detection guide
-- **`Webcam Server/docs/2025-10-07_ml-server-feature-alignment-fix.md`** - Feature extraction fix
-- **`Topeng Server/SETUP.md`** - Topeng server setup (this handles numpy<2)
-- **`Topeng Server/README_TOPENG.md`** - Topeng server overview
-- **`README_SERVERS.md`** - This file (dual architecture)
+**ML Ethnicity Detection Server:**
+- **`Webcam Server/README.md`** - Main README
+- **`Webcam Server/README_ML.md`** - ML system guide
+- **`Webcam Server/docs/`** - All ML server documentation
+- **`Webcam Server/docs/README.md`** - Documentation index
+
+**Topeng Mask Overlay Server:**
+- **`Topeng Server/README.md`** - Main README
+- **`Topeng Server/SETUP.md`** - Setup guide
+- **`Topeng Server/docs/`** - All Topeng server documentation
+- **`Topeng Server/docs/README.md`** - Documentation index
 
 ### Feature Documentation
 
-- **`Webcam Server/FEATURE_VERIFICATION.md`** - Camera pause & UNREGISTER verification
-- **`Webcam Server/IMPLEMENTATION_SUMMARY.md`** - Complete feature summary
 - **`Webcam Server/ARCHITECTURE.md`** - System architecture overview
+- **`Webcam Server/docs/2025-10-08_continuous-operation.md`** - Continuous webcam operation
+- **`Webcam Server/docs/2025-10-08_feature-verification.md`** - Feature verification
+- **`Webcam Server/docs/2025-10-03_ml-ethnicity-detection-guide.md`** - ML detection guide
 
 ---
 

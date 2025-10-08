@@ -54,27 +54,14 @@ var ethnicity_data = {
 
 func _ready():
 	print("=== EthnicityDetectionController._ready() ===")
-	print("Scene tree ready, setting up webcam...")
-	
-	# Verifikasi node path dulu
-	print("Verifying node paths...")
-	print("webcam_feed path exists: ", has_node("MainContainer/CameraContainer/WebcamContainer/WebcamFeed"))
-	print("camera_status_label path exists: ", has_node("MainContainer/CameraContainer/WebcamContainer/WebcamFeed/CameraStatusLabel"))
-	
 	setup_webcam_manager()
 	setup_timers()
-	reset_ui()
 	setup_loading_spinner()
-
-	# Inisialisasi label FPS dan confidence
-	if fps_label:
-		fps_label.text = "FPS: 0.0"
-	if confidence_label:
-		confidence_label.text = "Confidence: 0%"
+	reset_ui()
 
 func setup_webcam_manager():
-	"""Setup WebcamManagerUDP untuk real webcam"""
-	print("=== Setting up WebcamManagerUDP ===")
+	"""Setup MLWebcamManager untuk real ML detection"""
+	print("=== Setting up MLWebcamManager ===")
 	
 	# Verifikasi node tersedia
 	if not webcam_feed:
@@ -88,15 +75,15 @@ func setup_webcam_manager():
 	# Setup placeholder image dulu
 	setup_webcam_placeholder()
 	
-	# Load WebcamManagerUDP script untuk UDP connection
-	var webcam_script = load("res://Scenes/EthnicityDetection/WebcamClient/WebcamManagerUDP.gd")
+	# ✅ Load MLWebcamManager (has automatic ML detection)
+	var webcam_script = load("res://Scenes/EthnicityDetection/WebcamClient/MLWebcamManager.gd")
 	if webcam_script == null:
-		print("❌ Error: Could not load WebcamManagerUDP.gd")
+		print("❌ Error: Could not load MLWebcamManager.gd")
 		camera_status_label.text = "❌ Script tidak ditemukan"
 		camera_status_label.modulate = Color(1, 0, 0, 0.9)
 		return
 	
-	print("Creating WebcamManagerUDP instance...")
+	print("Creating MLWebcamManager instance...")
 	webcam_manager = webcam_script.new()
 	add_child(webcam_manager)
 	
@@ -119,15 +106,21 @@ func setup_webcam_manager():
 		print("✅ error_message signal connected")
 	else:
 		print("❌ error_message signal not found")
+	
+	if webcam_manager.has_signal("detection_result_received"):
+		webcam_manager.detection_result_received.connect(_on_detection_result_received)
+		print("✅ detection_result_received signal connected")
+	else:
+		print("❌ detection_result_received signal not found")
 		
 	# Update status
-	camera_status_label.text = "🔗 Menghubungkan ke UDP webcam server (port 8888)..."
+	camera_status_label.text = "🔗 Menghubungkan ke ML server (port 8888)..."
 	camera_status_label.modulate = Color(1, 1, 0, 0.8)
 	
-	# Coba koneksi ke webcam server
-	print("Attempting UDP connection to webcam server...")
+	# ✅ DUAL WEBCAM: Connect immediately (camera always ready)
+	print("🔄 Connecting to ML server (dedicated camera)...")
 	webcam_manager.connect_to_webcam_server()
-	print("WebcamManagerUDP setup complete")
+	print("MLWebcamManager setup complete")
 
 func setup_webcam_placeholder():
 	"""Buat placeholder image untuk webcam"""
@@ -169,11 +162,12 @@ func _on_webcam_frame_received(texture: ImageTexture):
 
 	# Less frequent UI updates
 	if webcam_frames_received == 1:
-		camera_status_label.text = "🎥 Webcam aktif"
+		camera_status_label.text = "🎥 Webcam aktif - siap untuk deteksi!"
 		camera_status_label.modulate = Color(0, 1, 0, 0.8)
+		print("✅ First frame received - camera is working!")
 		
-		# Hide status after 2 seconds
-		await get_tree().create_timer(2.0).timeout
+		# Hide status after 3 seconds
+		await get_tree().create_timer(3.0).timeout
 		if camera_status_label:
 			camera_status_label.visible = false
 	# Remove frequent frame counter updates for better performance
@@ -181,9 +175,14 @@ func _on_webcam_frame_received(texture: ImageTexture):
 func _on_webcam_connection_changed(connected: bool):
 	"""Callback ketika status koneksi webcam berubah"""
 	if connected:
-		camera_status_label.text = "🎥 UDP webcam terhubung"
-		camera_status_label.modulate = Color(0, 1, 0, 0.9)
+		camera_status_label.text = "🎥 UDP webcam terhubung - menunggu kamera..."
+		camera_status_label.modulate = Color(1, 1, 0, 0.9)
 		print("🎉 UDP webcam server connected successfully")
+		
+		# Wait a bit more for camera to be fully ready
+		await get_tree().create_timer(1.0).timeout
+		camera_status_label.text = "🎥 Kamera siap - tunggu frame pertama..."
+		camera_status_label.modulate = Color(0, 1, 0, 0.9)
 	else:
 		camera_status_label.text = "❌ UDP koneksi terputus"
 		camera_status_label.modulate = Color(1, 0, 0, 0.9)
@@ -195,6 +194,48 @@ func _on_webcam_error(message: String):
 	camera_status_label.modulate = Color(1, 0, 0, 0.9)
 	camera_status_label.visible = true
 	print("Webcam Error: " + message)
+
+func _on_detection_result_received(ethnicity: String, confidence: float, model: String):
+	"""Callback ketika menerima hasil deteksi dari ML server"""
+	print("🧠 Received ML detection result: " + ethnicity + " (" + str(confidence) + "%)")
+	
+	# Stop the simulation timer and use real ML result
+	if detection_timer:
+		detection_timer.stop()
+	
+	# Set the detected ethnicity result
+	detected_ethnicity_result = ethnicity
+	
+	# Complete detection with real ML result
+	detection_complete_with_ml_result(ethnicity, confidence, model)
+
+func detection_complete_with_ml_result(ethnicity: String, confidence: float, model: String):
+	"""Complete detection using real ML result instead of simulation"""
+	is_detecting = false
+	
+	# Update UI with real ML result
+	face_frame.border_color = Color(0, 1, 0, 0.8)
+	status_label.text = "Deteksi berhasil!"
+	ethnicity_label.text = "Etnis Terdeteksi: " + ethnicity
+	description_label.text = ethnicity_data[ethnicity]["description"]
+	
+	result_container.visible = true
+	start_button.visible = false
+
+	# Tampilkan tombol skip ke map
+	if skip_to_map_button:
+		skip_to_map_button.visible = true
+	
+	# Update confidence with real ML result
+	if confidence_label:
+		confidence_label.text = "Confidence: %.1f%% (ML Model: %s)" % [confidence * 100, model]
+	
+	# Mulai countdown redirect (30 detik)
+	redirect_timer.start()
+	redirect_label.text = "Mengarahkan ke region budaya yang sesuai dalam 30 detik..."
+	
+	# Animate countdown
+	create_countdown_animation()
 
 func setup_loading_spinner():
 	# Buat spinner loading sederhana
@@ -272,6 +313,14 @@ func start_detection():
 	progress_bar.value = 0
 	status_label.text = "Mendeteksi wajah..."
 	face_frame.border_color = Color(1, 1, 0, 0.8)
+	
+	# Send DETECTION_REQUEST command to ML server
+	if webcam_manager and webcam_manager.has_method("send_detection_request"):
+		print("🔍 Sending DETECTION_REQUEST to ML server...")
+		webcam_manager.send_detection_request()
+	else:
+		print("⚠️ Webcam manager not available for detection request")
+	
 	detection_timer.start()
 
 func stop_detection():

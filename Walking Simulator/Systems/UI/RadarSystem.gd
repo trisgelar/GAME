@@ -38,7 +38,7 @@ var player_rotation: float
 func _ready():
 	GameLogger.info("RadarSystem: ===== RADAR SYSTEM READY CALLED =====")
 	GameLogger.info("RadarSystem: Node name: " + name)
-	GameLogger.info("RadarSystem: Node path: " + get_path())
+	GameLogger.info("RadarSystem: Node path: " + str(get_path()))
 	GameLogger.info("RadarSystem: Parent: " + str(get_parent().name if get_parent() else "None"))
 	
 	# Ensure this node can receive input

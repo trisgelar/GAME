@@ -6,7 +6,8 @@ extends Control
 @onready var mask_display = $MainContainer/WebcamContainer/WebcamPanel/WebcamFeed/MaskOverlay/MaskDisplay
 @onready var mask_info_label = $MainContainer/InfoContainer/MaskInfoLabel
 @onready var status_label = $MainContainer/InfoContainer/StatusLabel
-@onready var fps_label = $MainContainer/WebcamContainer/WebcamPanel/WebcamFeed/FPSLabel
+# FPS label is optional - may not exist in all scenes
+var fps_label: Label = null
 
 # Webcam Manager - will be loaded manually
 var webcam_manager: Node = null
@@ -23,19 +24,35 @@ func _ready() -> void:
 	# Verify node paths (debug)
 	print("webcam_feed path exists: ", has_node("MainContainer/WebcamContainer/WebcamPanel/WebcamFeed"))
 	print("camera_status_label path exists: ", has_node("MainContainer/WebcamContainer/WebcamPanel/WebcamFeed/CameraStatusLabel"))
-	print("fps_label path exists: ", has_node("MainContainer/WebcamContainer/WebcamPanel/WebcamFeed/FPSLabel"))
+	
+	# Try to find FPS label (optional)
+	if has_node("MainContainer/WebcamContainer/WebcamPanel/WebcamFeed/FPSLabel"):
+		fps_label = $MainContainer/WebcamContainer/WebcamPanel/WebcamFeed/FPSLabel
+		print("fps_label found and assigned")
+	else:
+		print("fps_label not found - will skip FPS display")
 	
 	setup_webcam_manager()
 	setup_mask_display()
 	display_mask_info()
 	
-	# If a custom mask was selected, send it to the server
-	# (This handles cases where user came from TopengCustomizationScene but server wasn't ready yet)
+	# If a mask was selected, send it to the server
+	# (This handles cases where user came from selection but server wasn't ready yet)
 	if Global.selected_mask_type == "custom":
 		print("Custom mask detected in Global, will send to server after a short delay...")
 		# Wait a moment for server connection to be established
 		await get_tree().create_timer(1.0).timeout
 		send_custom_mask_from_global()
+	elif Global.selected_mask_type == "preset":
+		print("Preset mask detected in Global, will send to server after a short delay...")
+		# Wait a moment for server connection to be established
+		await get_tree().create_timer(1.0).timeout
+		send_preset_mask_from_global()
+	else:
+		print("No mask selected, setting default mask (bali.png)...")
+		# Wait a moment for server connection to be established
+		await get_tree().create_timer(1.0).timeout
+		send_default_mask()
 
 func setup_webcam_manager() -> void:
 	"""Setup WebcamManagerUDP for real webcam"""
@@ -53,35 +70,15 @@ func setup_webcam_manager() -> void:
 	# Setup placeholder image first
 	setup_webcam_placeholder()
 
-	# Candidate paths — adjusted to realistic project layout (use the Walking Simulator path first)
-	var candidates := [
-		"res://Walking Simulator/Scenes/EthnicityDetection/WebcamClient/WebcamManagerUDP.gd",
-		"res://Scenes/EthnicityDetection/WebcamClient/WebcamManagerUDP.gd"
-	]
-
-	var webcam_script: Script = null
-	for path in candidates:
-		var s = load(path)
-		if s and s is Script:
-			webcam_script = s
-			print("✅ Loaded WebcamManagerUDP from: ", path)
-			break
-
-	# last resort: try the explicit path used earlier if needed
+	# Load the webcam manager (use working path format)
+	var webcam_script = load("res://Scenes/EthnicityDetection/WebcamClient/WebcamManagerUDP.gd")
 	if webcam_script == null:
-		var alt = "res://Walking Simulator/Scenes/EthnicityDetection/WebcamClient/WebcamManagerUDP.gd"
-		var s2 = load(alt)
-		if s2 and s2 is Script:
-			webcam_script = s2
-			print("✅ Loaded WebcamManagerUDP from alt: ", alt)
-
-	if webcam_script == null:
-		print("❌ ERROR: Could not find WebcamManagerUDP.gd in candidate paths. Please adjust path.")
+		print("❌ ERROR: Could not find WebcamManagerUDP.gd")
 		camera_status_label.text = "❌ Script not found"
 		camera_status_label.modulate = Color(1,0,0,0.9)
 		return
 
-	# Instantiate and add as child (so it gets _process etc.)
+	# Instantiate and add as child
 	webcam_manager = webcam_script.new()
 	if webcam_manager == null:
 		print("❌ ERROR: Failed to instantiate WebcamManagerUDP")
@@ -90,9 +87,9 @@ func setup_webcam_manager() -> void:
 		return
 
 	add_child(webcam_manager)
-	print("Created WebcamManagerUDP instance and added to scene tree")
+	print("✅ Created WebcamManagerUDP instance and added to scene tree")
 	
-	# ✅ CRITICAL: Set port to 8889 for Topeng Mask Server!
+	# Set port to 8889 for Topeng server
 	webcam_manager.server_port = 8889
 	print("✅ Topeng server port set to: 8889")
 
@@ -131,16 +128,26 @@ func setup_webcam_manager() -> void:
 	camera_status_label.text = "🔗 Menghubungkan ke Topeng Mask Server (port 8889)..."
 	camera_status_label.modulate = Color(1, 1, 0, 0.9)
 
-	# Try connecting to webcam server (the method exists in WebcamManagerUDP.gd)
+	# Try connecting to webcam server
 	if webcam_manager.has_method("connect_to_webcam_server"):
 		print("Attempting UDP connection to Topeng Mask Server (Port 8889)...")
-		# call it deferred so this setup finishes and any signals can be connected first
-		webcam_manager.call_deferred("connect_to_webcam_server")
-		print("Called connect_to_webcam_server() (deferred)")
+		# Start connection process with delay
+		_connect_with_delay()
 	else:
 		print("⚠️ WebcamManagerUDP instance does not have connect_to_webcam_server() method")
 		camera_status_label.text = "❌ No connect method"
 		camera_status_label.modulate = Color(1,0,0,0.9)
+
+
+func _connect_with_delay() -> void:
+	"""Connect to webcam server with delay to ensure camera is released"""
+	print("⏳ Waiting 1.0 seconds for previous camera to be released...")
+	# Wait longer to ensure previous camera is released
+	await get_tree().create_timer(1.0).timeout
+	print("🔄 Attempting to connect to Topeng server (port 8889)...")
+	# Connect to Topeng server (port 8889)
+	webcam_manager.connect_to_webcam_server()
+	print("✅ Called connect_to_webcam_server()")
 
 func setup_webcam_placeholder() -> void:
 	var w := 640
@@ -185,19 +192,22 @@ func display_mask_info() -> void:
 	var selected_type: String = ""   # <-- tambahkan tipe String, default kosong
 	var selected_id: int = -1        # <-- tambahkan tipe Int, default -1
 	# assume Global autoload exists in this project (other scripts reference it)
-	# but use get() for safer property access
+	# use direct property access with null checks
 	if typeof(Global) != TYPE_NIL:
-		selected_type = Global.get("selected_mask_type")
-		selected_id = Global.get("selected_mask_id")
+		if "selected_mask_type" in Global:
+			selected_type = Global.selected_mask_type
+		if "selected_mask_id" in Global:
+			selected_id = Global.selected_mask_id
 
 	if selected_type == "preset":
 		mask_info = "Topeng Preset #" + str(selected_id)
 		status_label.text = "Status: Menampilkan topeng preset"
 	elif selected_type == "custom":
-		# safe-get components from Global (use get so missing property yields null)
+		# safe-get components from Global (use "in" operator so missing property yields null)
 		var components = null
 		if typeof(Global) != TYPE_NIL:
-			components = Global.get("custom_mask_components")
+			if "custom_mask_components" in Global:
+				components = Global.custom_mask_components
 		if components != null:
 			# assume components has .base, .mata, .mulut (same structure as before)
 			mask_info = "Topeng Custom (Base: %d, Mata: %d, Mulut: %d)" % [components.base, components.mata, components.mulut]
@@ -274,13 +284,10 @@ func cleanup_resources() -> void:
 	print("Cleaning up webcam resources...")
 
 	if webcam_manager != null:
-		# Try to tell the manager to disconnect from the server (if method exists)
+		# Disconnect from server
 		if webcam_manager.has_method("disconnect_from_server"):
 			print("Calling webcam_manager.disconnect_from_server()")
 			webcam_manager.disconnect_from_server()
-		elif webcam_manager.has_method("disconnect_webcam"):
-			# older/alternate name if present
-			webcam_manager.disconnect_webcam()
 
 		# free and nil the manager node
 		webcam_manager.queue_free()
@@ -308,9 +315,15 @@ func send_custom_mask_from_global() -> void:
 		print("⚠️ Custom mask type selected but no components found in Global")
 		return
 	
-	var base_id = components.get("base", 0)
-	var mata_id = components.get("mata", 0)
-	var mulut_id = components.get("mulut", 0)
+	var base_id = 0
+	var mata_id = 0
+	var mulut_id = 0
+	if "base" in components:
+		base_id = components.base
+	if "mata" in components:
+		mata_id = components.mata
+	if "mulut" in components:
+		mulut_id = components.mulut
 	
 	print("Sending custom mask from Global to server: Base=%d, Mata=%d, Mulut=%d" % [base_id, mata_id, mulut_id])
 	
@@ -345,6 +358,120 @@ func send_custom_mask_from_global() -> void:
 				print("📥 Server response:", resp)
 				if resp.begins_with("SET_CUSTOM_MASK_RECEIVED") or resp.begins_with("CUSTOM_MASK_SET:"):
 					print("✅ Server acknowledged custom mask")
+					break
+	
+	udp.close()
+
+
+func send_preset_mask_from_global() -> void:
+	"""
+	Send preset mask configuration from Global to the server.
+	This is called when the webcam scene loads and a preset mask is already selected.
+	"""
+	if Global.selected_mask_type != "preset":
+		return
+	
+	var mask_id = -1
+	if "selected_mask_id" in Global:
+		mask_id = Global.selected_mask_id
+	if mask_id <= 0 or mask_id > 7:
+		print("⚠️ Preset mask type selected but invalid mask_id: %d" % mask_id)
+		return
+	
+	# Map mask_id to actual mask filename
+	var mask_filenames = {
+		1: "bali.png",
+		2: "betawi.png", 
+		3: "hudoq.png",
+		4: "kelana.png",
+		5: "panji2.png",
+		6: "prabu.png",
+		7: "sumatra.png"
+	}
+	
+	var mask_filename = ""
+	if mask_id in mask_filenames:
+		mask_filename = mask_filenames[mask_id]
+	if mask_filename == "":
+		print("⚠️ No mask filename found for mask_id: %d" % mask_id)
+		return
+	
+	print("Sending preset mask from Global to server: %s (ID: %d)" % [mask_filename, mask_id])
+	
+	# Use the Topeng Mask Server port (8889)
+	var server_host: String = "127.0.0.1"
+	var server_port: int = 8889  # ✅ CRITICAL: Use Topeng server port!
+	
+	var udp = PacketPeerUDP.new()
+	var err = udp.connect_to_host(server_host, server_port)
+	if err != OK:
+		print("❌ Failed to connect UDP to %s:%d (error %d)" % [server_host, server_port, err])
+		return
+	
+	# Format: "SET_MASK filename"
+	var message := "SET_MASK %s" % mask_filename
+	var packet := message.to_utf8_buffer()
+	var send_err = udp.put_packet(packet)
+	if send_err != OK:
+		print("❌ Failed to send SET_MASK packet (error %d)" % send_err)
+		udp.close()
+		return
+	
+	print("📤 Sent preset mask to Topeng server:", message)
+	
+	# Wait briefly for acknowledgment (non-blocking)
+	for i in range(30):  # Wait up to ~0.5 seconds
+		await get_tree().process_frame
+		if udp.get_available_packet_count() > 0:
+			var response_packet = udp.get_packet()
+			var resp := response_packet.get_string_from_utf8()
+			if resp != "":
+				print("📥 Server response:", resp)
+				if resp.begins_with("SET_MASK_RECEIVED") or resp.begins_with("MASK_SET:"):
+					print("✅ Server acknowledged preset mask")
+					break
+	
+	udp.close()
+
+
+func send_default_mask() -> void:
+	"""
+	Send default mask (bali.png) to the server.
+	This is called when no mask is selected.
+	"""
+	print("Sending default mask (bali.png) to server...")
+	
+	# Use the Topeng Mask Server port (8889)
+	var server_host: String = "127.0.0.1"
+	var server_port: int = 8889  # ✅ CRITICAL: Use Topeng server port!
+	
+	var udp = PacketPeerUDP.new()
+	var err = udp.connect_to_host(server_host, server_port)
+	if err != OK:
+		print("❌ Failed to connect UDP to %s:%d (error %d)" % [server_host, server_port, err])
+		return
+	
+	# Format: "SET_MASK bali.png"
+	var message := "SET_MASK bali.png"
+	var packet := message.to_utf8_buffer()
+	var send_err = udp.put_packet(packet)
+	if send_err != OK:
+		print("❌ Failed to send SET_MASK packet (error %d)" % send_err)
+		udp.close()
+		return
+	
+	print("📤 Sent default mask to Topeng server:", message)
+	
+	# Wait briefly for acknowledgment (non-blocking)
+	for i in range(30):  # Wait up to ~0.5 seconds
+		await get_tree().process_frame
+		if udp.get_available_packet_count() > 0:
+			var response_packet = udp.get_packet()
+			var resp := response_packet.get_string_from_utf8()
+			if resp != "":
+				print("📥 Server response:", resp)
+				if resp.begins_with("SET_MASK_RECEIVED") or resp.begins_with("MASK_SET:"):
+					print("✅ Server acknowledged default mask")
 					break
 	
 	udp.close()

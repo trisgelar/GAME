@@ -405,12 +405,5 @@ func stop_music_audio():
 func stop_ui_audio():
 	ui_player.stop()
 
-func stop_all_audio():
-	ambient_player.stop()
-	effect_player.stop()
-	voice_player.stop()
-	menu_player.stop()
-	footstep_player.stop()
-	music_player.stop()
-	ui_player.stop()
+# Duplicate function removed - already exists above
 	is_ambient_playing = false

@@ -34,10 +34,10 @@ if errorlevel 1 (
 
 REM Start the server
 echo.
-echo Starting Topeng server on port 8889...
+echo Starting Topeng server on port 8889 with Camera ID 1...
 echo Press Ctrl+C to stop the server
 echo.
-python udp_webcam_server.py --port 8889
+python udp_webcam_server.py --port 8889 --camera_id 1
 
 REM Keep window open on error
 if errorlevel 1 (
