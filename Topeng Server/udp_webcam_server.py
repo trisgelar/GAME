@@ -127,8 +127,8 @@ class UDPWebcamServer:
         return False
 
     def start_server(self):
-        if not self.initialize_camera():
-            return
+        # Don't initialize camera yet - wait for first client connection
+        print("🎥 Camera will be initialized when first client connects")
 
         # instantiate filter engine here if available
         if FilterEngine is not None:
@@ -154,6 +154,7 @@ class UDPWebcamServer:
 
         print(f"🚀 Optimized UDP Server: {self.host}:{self.port}")
         print(f"📊 Settings: {self.frame_width}x{self.frame_height}, {self.target_fps}FPS, Q{self.jpeg_quality}")
+        print("⏸️  No clients connected - camera will be initialized on first connection")
 
         self.running = True
 
@@ -197,6 +198,14 @@ class UDPWebcamServer:
                     if addr not in self.clients:
                         self.clients.add(addr)
                         print(f"✅ Client: {addr} (Total: {len(self.clients)})")
+                        
+                        # Initialize camera on first client connection
+                        if len(self.clients) == 1 and self.camera is None:
+                            print("🎥 First client connected - initializing camera...")
+                            if self.initialize_camera():
+                                print("✅ Camera initialized successfully")
+                            else:
+                                print("❌ Failed to initialize camera")
                     # ack
                     try:
                         self.server_socket.sendto("REGISTERED".encode('utf-8'), addr)
@@ -206,6 +215,32 @@ class UDPWebcamServer:
                 elif message == "UNREGISTER":
                     self.clients.discard(addr)
                     print(f"❌ Client left: {addr}")
+                    
+                    # Release camera when last client disconnects
+                    if len(self.clients) == 0 and self.camera is not None:
+                        print("📹 Last client disconnected - releasing camera")
+                        try:
+                            self.camera.release()
+                            self.camera = None
+                            print("✅ Camera released")
+                        except Exception as e:
+                            print(f"⚠️ Error releasing camera: {e}")
+
+                elif message == "RELEASE_CAMERA":
+                    # Force release camera resource
+                    print(f"📹 Camera release requested by {addr}")
+                    try:
+                        if self.camera and self.camera.isOpened():
+                            self.camera.release()
+                            print("✅ Camera released")
+                        # Reinitialize camera
+                        self.camera = cv2.VideoCapture(0)
+                        if self.camera.isOpened():
+                            print("✅ Camera reinitialized")
+                        else:
+                            print("❌ Failed to reinitialize camera")
+                    except Exception as e:
+                        print(f"⚠️ Camera release error: {e}")
 
                 # SET_MASK commands: queue for broadcast thread to execute
                 elif message.startswith("SET_MASK "):
@@ -378,6 +413,12 @@ class UDPWebcamServer:
                 print(f"▶️  Client(s) connected ({len(self.clients)}) - camera resumed")
                 camera_paused = False
                 last_frame_time = 0  # Reset timing to avoid burst
+
+            # Check if camera is initialized
+            if self.camera is None:
+                print("⚠️ Camera not initialized yet, waiting...")
+                time.sleep(0.1)
+                continue
 
             # Frame rate control
             if current_time - last_frame_time < self.frame_send_time:
