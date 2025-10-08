@@ -1,38 +1,69 @@
-# ML-Enhanced Webcam Server
+# Webcam Server System
 
 ## Overview
-This is the ML-enhanced webcam server for the ISSAT-PCD-Walking-Simulator project. It provides real-time ethnicity detection using trained machine learning models (HOG, GLCM, LBP, HSV) and streams webcam data to the Godot client via UDP protocol.
+This system provides **two independent webcam servers** for the ISSAT-PCD-Walking-Simulator project:
+
+1. **Ethnicity Detection ML Server** (Port 8888) - Real-time ethnicity classification using machine learning
+2. **Topeng Mask Overlay Server** (Port 8889) - Traditional Indonesian mask overlay with MediaPipe face tracking
+
+Both servers use UDP protocol and can run simultaneously without conflicts.
 
 ## 🚀 Quick Start
 
-### 1. Install Dependencies
+### Option 1: Start Both Servers
+
 ```bash
-pip install -r requirements.txt
+# Double-click this file:
+start_both_servers.bat
 ```
 
-### 2. Test ML System
-```bash
-python test_ml_server.py
-```
+Two windows will open:
+- Ethnicity ML Server (Port 8888)
+- Topeng Mask Server (Port 8889)
 
-### 3. Start ML Server
+### Option 2: Individual Servers
+
+**Ethnicity Detection Only:**
 ```bash
+start_ethnicity_server.bat
+# OR
 python ml_webcam_server.py
 ```
 
-### 4. Run Godot Client
-- Open `Walking Simulator` project
-- Run `EthnicityDetectionScene.tscn`
-- Select ML model and start detection
+**Topeng Mask Only:**
+```bash
+start_topeng_server.bat
+# OR
+cd Topeng
+python udp_webcam_server.py
+```
+
+### Dependencies Installation
+
+```bash
+# Ethnicity ML Server
+pip install -r requirements.txt
+
+# Topeng Mask Server
+cd Topeng
+pip install -r requirements_topeng.txt
+```
 
 ## 📚 Documentation
 
-Complete documentation is available in the `docs/` folder:
+### Main Documentation
 
-- **[docs/README.md](docs/README.md)** - Documentation overview
-- **[docs/2025-10-03_quick-start-guide.md](docs/2025-10-03_quick-start-guide.md)** - 5-minute setup guide
-- **[docs/2025-10-03_setup-and-branch-management.md](docs/2025-10-03_setup-and-branch-management.md)** - Git setup and branch management
+- **[README_DUAL_SERVER.md](README_DUAL_SERVER.md)** - Complete dual server guide ⭐ START HERE
+- **[README_ML.md](README_ML.md)** - ML ethnicity detection details
+- **[Topeng/README_TOPENG.md](Topeng/README_TOPENG.md)** - Topeng mask overlay system
+
+### Technical Documentation (`docs/` folder)
+
+- **[docs/2025-10-08_ml-server-changes-detailed-explanation.md](docs/2025-10-08_ml-server-changes-detailed-explanation.md)** - ML feature extraction fixes
+- **[docs/2025-10-08_topeng-nusantara-integration-guide.md](docs/2025-10-08_topeng-nusantara-integration-guide.md)** - Topeng integration guide
+- **[docs/2025-10-07_ml-server-feature-alignment-fix.md](docs/2025-10-07_ml-server-feature-alignment-fix.md)** - Feature alignment documentation
 - **[docs/2025-10-03_ml-ethnicity-detection-guide.md](docs/2025-10-03_ml-ethnicity-detection-guide.md)** - Complete ML implementation guide
+- **[docs/2025-10-03_quick-start-guide.md](docs/2025-10-03_quick-start-guide.md)** - 5-minute setup guide
 
 ## 🔧 Available Models
 

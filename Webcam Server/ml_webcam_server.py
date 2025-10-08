@@ -522,13 +522,24 @@ class MLWebcamServer:
     
     def _broadcast_frames(self):
         last_frame_time = 0
+        camera_paused = False
         
         while self.running:
             current_time = time.time()
             
+            # ✅ FIX: Pause camera when no clients to save resources
             if len(self.clients) == 0:
-                time.sleep(0.1)
+                if not camera_paused:
+                    print("⏸️  No clients connected - camera paused (saves CPU/bandwidth)")
+                    camera_paused = True
+                time.sleep(0.5)  # Check less frequently when idle
                 continue
+            
+            # ✅ Resume camera when client connects
+            if camera_paused:
+                print(f"▶️  Client(s) connected ({len(self.clients)}) - camera resumed")
+                camera_paused = False
+                last_frame_time = 0  # Reset timing
             
             if current_time - last_frame_time < self.frame_send_time:
                 time.sleep(0.01)
