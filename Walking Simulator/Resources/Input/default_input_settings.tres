@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="InputSettings" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/Input/InputSettings.gd" id="1_input"]
+
+[resource]
+script = ExtResource("1_input")
+mouse_sensitivity = 0.02
+invert_mouse_y = false
+joystick_camera_sensitivity = 200.0
+joystick_deadzone = 0.15
+invert_joystick_y = false
+invert_joystick_x = false
+min_pitch = -1.5
+max_pitch = 1.5
+camera_smoothing = 0.0
+walk_speed = 4.0
+run_speed = 6.0
+jump_force = 5.0
+acceleration = 20.0
+braking = 20.0
+air_acceleration = 4.0
+gravity_modifier = 1.5
+

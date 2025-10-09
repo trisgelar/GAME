@@ -1,6 +1,9 @@
 extends CharacterBody3D
 
-# Movement settings (from working complex systems)
+# Input Settings Resource (untuk yang "pelupa"!)
+@export var input_settings: InputSettings
+
+# Movement settings (from working complex systems) - loaded from resource if available
 var MOVE_SPEED: float = 8.0
 var RUN_SPEED: float = 16.0
 var JUMP_FORCE: float = 15.0
@@ -12,13 +15,16 @@ var AIR_CONTROL: float = 0.3
 var gravity: float = 40.0
 var max_fall_speed: float = 50.0
 
-# Complex camera settings (increased sensitivity for better control)
+# Complex camera settings (increased sensitivity for better control) - loaded from resource if available
 var mouse_sensitivity: float = 0.00125
+var joystick_camera_sensitivity: float = 200.0
 var camera_distance: float = 6.0
 var camera_height: float = 1.5
 var camera_smoothness: float = 2.0  # Reduced for more responsive feel
 var max_pitch: float = 70.0
 var min_pitch: float = -30.0
+var invert_joystick_y: bool = false
+var invert_joystick_x: bool = false
 
 # Complex physics variables
 var current_speed: float = 0.0
@@ -61,15 +67,39 @@ var frame_count: int = 0
 var fps: float = 0.0
 
 func _ready():
+	# Load settings from resource if available
+	_load_input_settings()
+	
 	GameLogger.info("Integrated Player Controller initialized")
-	GameLogger.info("Features: Complex Physics + Complex Camera + Input Actions")
-	GameLogger.info("Controls: WASD = Move, Shift = Run, Space = Jump, RMB = Look, ESC = Exit")
+	GameLogger.info("Features: Complex Physics + Complex Camera + Input Actions + Joystick Support")
+	GameLogger.info("Controls: WASD = Move, Shift/LB = Run, Space/A = Jump, Mouse/Right Stick = Look, ESC = Exit")
 	
 	# Set mouse mode to captured for camera control
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	
 	# Add to player group for radar system
 	add_to_group("player")
+
+func _load_input_settings():
+	"""Load all parameters from InputSettings resource"""
+	if input_settings:
+		# Load all settings from resource
+		MOVE_SPEED = input_settings.walk_speed
+		RUN_SPEED = input_settings.run_speed
+		JUMP_FORCE = input_settings.jump_force
+		ACCELERATION = input_settings.acceleration
+		DECELERATION = input_settings.braking
+		AIR_CONTROL = input_settings.air_acceleration / 10.0  # Convert to 0-1 range
+		mouse_sensitivity = input_settings.mouse_sensitivity / 10.0  # Scale down for this controller
+		joystick_camera_sensitivity = input_settings.joystick_camera_sensitivity
+		min_pitch = rad_to_deg(input_settings.min_pitch)
+		max_pitch = rad_to_deg(input_settings.max_pitch)
+		invert_joystick_y = input_settings.invert_joystick_y
+		invert_joystick_x = input_settings.invert_joystick_x
+		
+		GameLogger.info("✅ Input settings loaded from resource")
+	else:
+		GameLogger.info("⚠️ No InputSettings resource assigned - using default values")
 	
 	# Robust camera node resolution (supports CameraArm or SpringArm3D)
 	GameLogger.info("Resolving camera nodes...")
@@ -247,7 +277,14 @@ func handle_complex_movement(delta: float):
 
 func handle_complex_jumping(delta: float):
 	## Complex jumping system (from working complex physics)
-	if ((InputMap.has_action("ui_accept") and Input.is_action_pressed("ui_accept")) or Input.is_physical_key_pressed(KEY_SPACE)) and is_grounded and jump_cooldown <= 0.0:
+	# Check for jump input (keyboard, gamepad, or ui_accept)
+	var jump_input = false
+	if InputMap.has_action("jump") and Input.is_action_pressed("jump"):
+		jump_input = true
+	elif (InputMap.has_action("ui_accept") and Input.is_action_pressed("ui_accept")) or Input.is_physical_key_pressed(KEY_SPACE):
+		jump_input = true
+	
+	if jump_input and is_grounded and jump_cooldown <= 0.0:
 		velocity.y = JUMP_FORCE
 		jump_cooldown = jump_delay
 		GameLogger.debug("INTEGRATED JUMP! Velocity: " + str(velocity))
@@ -308,20 +345,38 @@ func handle_complex_camera(delta: float):
 	camera_arm.rotation.x = camera_rotation.y
 
 func handle_mouse_look():
-	## Mouse look handling (from working complex camera)
+	## Mouse and joystick look handling (updated for joystick support)
 	# Only rotate when RMB is held if required, so UI remains usable
 	if require_right_mouse_to_rotate and not Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
 		GameLogger.debug("Mouse look blocked - RMB required but not pressed")
 		return
 	
+	# Get mouse input
 	var mouse_delta = last_mouse_delta
 	last_mouse_delta = Vector2.ZERO
 	
-	if mouse_delta.length() > 0.0:
-		GameLogger.debug("Mouse look processing - delta: " + str(mouse_delta))
+	# Get joystick input from right analog stick
+	var joystick_input = Vector2.ZERO
+	joystick_input.x = Input.get_action_strength("camera_right") - Input.get_action_strength("camera_left")
+	joystick_input.y = Input.get_action_strength("camera_down") - Input.get_action_strength("camera_up")
+	
+	# Apply inversion if enabled
+	if invert_joystick_x:
+		joystick_input.x = -joystick_input.x
+	if invert_joystick_y:
+		joystick_input.y = -joystick_input.y
+	
+	# Scale joystick input
+	joystick_input *= joystick_camera_sensitivity * get_process_delta_time()
+	
+	# Combine mouse and joystick input
+	var combined_delta = mouse_delta + joystick_input
+	
+	if combined_delta.length() > 0.0:
+		GameLogger.debug("Camera input - Mouse: " + str(mouse_delta) + " Joystick: " + str(joystick_input))
 		# Update target rotation
-		target_camera_rotation.x -= mouse_delta.x * mouse_sensitivity
-		target_camera_rotation.y -= mouse_delta.y * mouse_sensitivity
+		target_camera_rotation.x -= combined_delta.x * mouse_sensitivity
+		target_camera_rotation.y -= combined_delta.y * mouse_sensitivity
 		
 		# Clamp pitch
 		target_camera_rotation.y = clamp(target_camera_rotation.y, deg_to_rad(min_pitch), deg_to_rad(max_pitch))

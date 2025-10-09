@@ -141,15 +141,15 @@ static func apply_cultural_theme_to_scene(scene_root: Node):
 static func find_nodes_by_type(root: Node, node_type: Variant) -> Array:
 	"""Find all nodes of a specific type in a scene tree"""
 	var found_nodes = []
-	
-	var _recursive_find = func(node: Node):
-		if node is node_type:
-			found_nodes.append(node)
-		for child in node.get_children():
-			_recursive_find.call(child)
-	
-	_recursive_find.call(root)
+	_recursive_find_nodes(root, node_type, found_nodes)
 	return found_nodes
+
+static func _recursive_find_nodes(node: Node, node_type: Variant, found_nodes: Array) -> void:
+	"""Recursively find nodes of a specific type"""
+	if is_instance_of(node, node_type):
+		found_nodes.append(node)
+	for child in node.get_children():
+		_recursive_find_nodes(child, node_type, found_nodes)
 
 ## Utility Methods
 

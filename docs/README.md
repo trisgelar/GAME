@@ -18,6 +18,19 @@ This folder contains project-wide documentation for the ISSAT Game dual webcam s
 **Testing:**
 - **[2025-10-08_test-webcam-switching.md](2025-10-08_test-webcam-switching.md)** - Webcam switching test documentation
 
+### Joystick & Input Setup (October 8, 2025)
+
+**Controller Configuration:**
+- **[2025-10-08_joystick-setup.md](2025-10-08_joystick-setup.md)** - Xbox-like controller setup guide
+- **[2025-10-08_input-settings-guide.md](2025-10-08_input-settings-guide.md)** - Resource-based input settings (no code editing!)
+- **[2025-10-08_joystick-all-scenes-update.md](2025-10-08_joystick-all-scenes-update.md)** - All scenes now support joystick!
+- **[JOYSTICK_QUICK_REFERENCE.md](JOYSTICK_QUICK_REFERENCE.md)** - Quick reference card (pin to monitor!)
+
+### UI & Theme Setup (October 9, 2025)
+
+**Menu Button Configuration:**
+- **[2025-10-09_menu-button-theme-guide.md](2025-10-09_menu-button-theme-guide.md)** - Configurable button backgrounds using .tres resources
+
 ---
 
 ## 🎯 Quick Links
@@ -86,20 +99,36 @@ start_topeng_mask_server.bat
 
 ---
 
-## 📝 Recent Changes (October 8, 2025)
+## 📝 Recent Changes
 
-### Dual Webcam Implementation
+### October 9, 2025 - UI Theme System
+- ✅ Added configurable button theme system
+- ✅ Button backgrounds with hover/pressed/disabled states
+- ✅ Easy customization via .tres resource files
+- ✅ Applied to all MainMenu buttons
+- ✅ Created comprehensive theme configuration guide
+
+### October 8, 2025 - Dual Webcam & Input
+
+#### Dual Webcam Implementation
 - ✅ Implemented dual USB webcam support
 - ✅ Separate camera for each server (Camera 0 & 1)
 - ✅ Eliminated resource conflicts
 - ✅ Continuous webcam operation (no pause/resume)
 - ✅ Instant scene switching in Godot
 
-### Documentation Updates
+#### Documentation Updates
 - ✅ Organized all .md files into docs folders
 - ✅ Standardized date format (2025-10-08_xxx.md)
 - ✅ Created comprehensive guides
 - ✅ Added camera detection documentation
+
+#### Joystick & Input Updates
+- ✅ Added Xbox-like controller support
+- ✅ Right analog stick for camera control
+- ✅ Resource-based input settings (no hardcoded values!)
+- ✅ Easy-to-edit .tres file for "pelupa" users
+- ✅ All settings adjustable via Godot Inspector
 
 ---
 

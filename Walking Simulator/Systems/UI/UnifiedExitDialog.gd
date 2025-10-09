@@ -31,6 +31,13 @@ func _init():
 	get_ok_button().text = "Yes"
 	get_cancel_button().text = "No"
 	
+	# Apply button theme
+	var button_theme = load("res://Resources/Themes/MenuButtonTheme.tres")
+	if button_theme:
+		get_ok_button().theme = button_theme
+		get_cancel_button().theme = button_theme
+		GameLogger.info("🎨 Applied MenuButtonTheme to exit dialog buttons")
+	
 	# Connect signals
 	confirmed.connect(_on_confirmed)
 	canceled.connect(_on_canceled)

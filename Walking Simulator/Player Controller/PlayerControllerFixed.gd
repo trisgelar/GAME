@@ -6,19 +6,25 @@ var current_region: String = ""
 var is_interacting: bool = false
 @export var debug_mode: bool = true
 
-# Movement parameters
-@export var max_speed: float = 4.0
-@export var acceleration: float = 20.0
-@export var braking: float = 20.0
-@export var air_acceleration: float = 4.0
-@export var jump_force: float = 5.0
-@export var gravity_modifier: float = 1.5
-@export var max_run_speed: float = 6.0
+# Input Settings Resource (easier to manage - untuk yang "pelupa"!)
+@export var input_settings: InputSettings
 
-# Camera parameters
-@export var look_sensitivity: float = 0.02
-@export var min_pitch: float = -1.5
-@export var max_pitch: float = 1.5
+# Movement parameters (loaded from resource if available)
+var max_speed: float = 4.0
+var acceleration: float = 20.0
+var braking: float = 20.0
+var air_acceleration: float = 4.0
+var jump_force: float = 5.0
+var gravity_modifier: float = 1.5
+var max_run_speed: float = 6.0
+
+# Camera parameters (loaded from resource if available)
+var look_sensitivity: float = 0.02
+var joystick_camera_sensitivity: float = 200.0
+var min_pitch: float = -1.5
+var max_pitch: float = 1.5
+var invert_joystick_y: bool = false
+var invert_joystick_x: bool = false
 
 # Movement state
 var player_velocity: Vector3 = Vector3.ZERO
@@ -52,6 +58,9 @@ func _ready():
 	_setup_command_manager()
 
 func _setup_initial_state():
+	# Load settings from resource if available
+	_load_input_settings()
+	
 	# Set initial mouse mode
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	
@@ -62,6 +71,31 @@ func _setup_initial_state():
 		print("Player initialized - Region: ", current_region)
 		print("Mouse mode: ", Input.get_mouse_mode())
 		print("Player position: ", position)
+		print("Input settings loaded - Joystick sensitivity: ", joystick_camera_sensitivity)
+
+func _load_input_settings():
+	"""Load all parameters from InputSettings resource"""
+	if input_settings:
+		# Load all settings from resource
+		max_speed = input_settings.walk_speed
+		max_run_speed = input_settings.run_speed
+		jump_force = input_settings.jump_force
+		acceleration = input_settings.acceleration
+		braking = input_settings.braking
+		air_acceleration = input_settings.air_acceleration
+		gravity_modifier = input_settings.gravity_modifier
+		look_sensitivity = input_settings.mouse_sensitivity
+		joystick_camera_sensitivity = input_settings.joystick_camera_sensitivity
+		min_pitch = input_settings.min_pitch
+		max_pitch = input_settings.max_pitch
+		invert_joystick_y = input_settings.invert_joystick_y
+		invert_joystick_x = input_settings.invert_joystick_x
+		
+		if debug_mode:
+			print("✅ Input settings loaded from resource")
+	else:
+		if debug_mode:
+			print("⚠️ No InputSettings resource assigned - using default values")
 
 func _connect_signals():
 	# Connect interaction signals if available
@@ -243,19 +277,37 @@ func _handle_movement(delta):
 
 	move_and_slide()
 
-func _handle_camera(_delta):
-	if camera_input != Vector2.ZERO:
+func _handle_camera(delta):
+	# Add joystick camera input from right analog stick
+	var joystick_camera_input = Vector2.ZERO
+	joystick_camera_input.x = Input.get_action_strength("camera_right") - Input.get_action_strength("camera_left")
+	joystick_camera_input.y = Input.get_action_strength("camera_down") - Input.get_action_strength("camera_up")
+	
+	# Apply inversion if enabled (dari InputSettings resource)
+	if invert_joystick_x:
+		joystick_camera_input.x = -joystick_camera_input.x
+	if invert_joystick_y:
+		joystick_camera_input.y = -joystick_camera_input.y
+	
+	# Scale joystick input using sensitivity from resource
+	# Joystick needs to be multiplied by delta for smooth frame-independent movement
+	joystick_camera_input *= joystick_camera_sensitivity * delta
+	
+	# Combine mouse and joystick input
+	var combined_camera_input = camera_input + joystick_camera_input
+	
+	if combined_camera_input != Vector2.ZERO:
 		# Apply camera rotation
-		rotate_y(-camera_input.x * look_sensitivity)
-		camera.rotate_x(-camera_input.y * look_sensitivity)
+		rotate_y(-combined_camera_input.x * look_sensitivity)
+		camera.rotate_x(-combined_camera_input.y * look_sensitivity)
 		
 		# Clamp pitch
 		camera.rotation.x = clamp(camera.rotation.x, min_pitch, max_pitch)
 		
-		if debug_mode:
-			print("Camera input: ", camera_input)
+		if debug_mode and combined_camera_input.length() > 0.01:
+			print("Camera input - Mouse: ", camera_input, " Joystick: ", joystick_camera_input)
 		
-		# Reset input
+		# Reset mouse input only (joystick is read each frame)
 		camera_input = Vector2.ZERO
 
 func _on_interaction_started(interactable: Node):

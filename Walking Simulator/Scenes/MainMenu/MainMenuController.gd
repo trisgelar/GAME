@@ -48,6 +48,15 @@ extends Control
 @onready var button_sound: AudioStreamPlayer = $ButtonSound
 var audio_manager: CulturalAudioManagerEnhanced
 
+# Menu Navigation System
+var current_menu_level: String = "main"  # "main", "start_game", "how_to_play", "about_us", "credits"
+var current_button_index: int = 0
+var buttons: Array[Button] = []
+var submenu_buttons: Array[Button] = []
+var navigation_enabled: bool = true
+var last_navigation_time: float = 0.0
+var navigation_cooldown: float = 0.2  # Prevent rapid navigation
+
 # Zoom effect variables
 var original_map_scale: Vector2 = Vector2.ONE
 var zoom_duration: float = 1.0
@@ -60,6 +69,7 @@ func _ready():
 	connect_signals()
 	setup_audio_manager()
 	setup_button_hover_audio()
+	setup_menu_navigation()
 	start_background_music()
 	GameLogger.info("✅ MainMenuController initialization completed")
 	
@@ -94,6 +104,180 @@ func setup_menu():
 	
 	# Set instructions
 	instructions_label.text = "Explore Indonesian cultural heritage through interactive experiences"
+
+func setup_menu_navigation():
+	"""Setup keyboard/joystick navigation for menu system"""
+	# Main menu buttons (excluding hidden start_game_button)
+	buttons = [
+		explore_3d_map_button,
+		topeng_nusantara_button,
+		load_game_button,
+		how_to_play_button,
+		about_us_button,
+		credits_button,
+		exit_button
+	]
+	
+	# Submenu buttons (region selection)
+	submenu_buttons = [
+		indonesia_barat_button,
+		indonesia_tengah_button,
+		indonesia_timur_button,
+		back_button
+	]
+	
+	# Set initial focus
+	current_button_index = 0
+	update_button_focus()
+	
+	GameLogger.info("🎮 Menu navigation system initialized with " + str(buttons.size()) + " main buttons")
+
+func _input(event):
+	"""Handle keyboard and joystick input for menu navigation"""
+	if not navigation_enabled:
+		return
+	
+	# Handle keyboard input
+	if event is InputEventKey and event.pressed:
+		match event.keycode:
+			KEY_UP:
+				navigate_up()
+				get_viewport().set_input_as_handled()
+			KEY_DOWN:
+				navigate_down()
+				get_viewport().set_input_as_handled()
+			KEY_LEFT:
+				navigate_left()
+				get_viewport().set_input_as_handled()
+			KEY_RIGHT:
+				navigate_right()
+				get_viewport().set_input_as_handled()
+			KEY_ENTER, KEY_SPACE:
+				activate_current_button()
+				get_viewport().set_input_as_handled()
+			KEY_ESCAPE:
+				handle_escape()
+				get_viewport().set_input_as_handled()
+	
+	# Handle joystick input
+	elif event is InputEventJoypadButton and event.pressed:
+		match event.button_index:
+			JOY_BUTTON_A:  # A button (Xbox style)
+				activate_current_button()
+				get_viewport().set_input_as_handled()
+			JOY_BUTTON_B:  # B button (Xbox style)
+				handle_escape()
+				get_viewport().set_input_as_handled()
+	
+	elif event is InputEventJoypadMotion:
+		# Handle analog stick movement
+		if abs(event.axis_value) > 0.5:  # Dead zone
+			match event.axis:
+				JOY_AXIS_LEFT_Y:
+					if event.axis_value < -0.5:  # Up
+						navigate_up()
+						get_viewport().set_input_as_handled()
+					elif event.axis_value > 0.5:  # Down
+						navigate_down()
+						get_viewport().set_input_as_handled()
+				JOY_AXIS_LEFT_X:
+					if event.axis_value < -0.5:  # Left
+						navigate_left()
+						get_viewport().set_input_as_handled()
+					elif event.axis_value > 0.5:  # Right
+						navigate_right()
+						get_viewport().set_input_as_handled()
+
+func update_button_focus():
+	"""Update visual focus on current button"""
+	var current_buttons = get_current_button_array()
+	if current_buttons.size() == 0:
+		return
+	
+	# Clear focus from all buttons
+	for button in current_buttons:
+		if button and is_instance_valid(button):
+			button.release_focus()
+	
+	# Set focus to current button
+	if current_button_index >= 0 and current_button_index < current_buttons.size():
+		var target_button = current_buttons[current_button_index]
+		if target_button and is_instance_valid(target_button):
+			target_button.grab_focus()
+			# Play hover sound
+			play_button_sound()
+
+func get_current_button_array() -> Array[Button]:
+	"""Get the current button array based on menu level"""
+	match current_menu_level:
+		"main":
+			return buttons
+		"start_game":
+			return submenu_buttons
+		_:
+			return []
+
+func navigate_up():
+	"""Navigate to previous button"""
+	var current_time = Time.get_time_dict_from_system()["unix"]
+	if current_time - last_navigation_time < navigation_cooldown:
+		return
+	
+	var current_buttons = get_current_button_array()
+	if current_buttons.size() == 0:
+		return
+	
+	current_button_index = (current_button_index - 1 + current_buttons.size()) % current_buttons.size()
+	update_button_focus()
+	last_navigation_time = current_time
+
+func navigate_down():
+	"""Navigate to next button"""
+	var current_time = Time.get_time_dict_from_system()["unix"]
+	if current_time - last_navigation_time < navigation_cooldown:
+		return
+	
+	var current_buttons = get_current_button_array()
+	if current_buttons.size() == 0:
+		return
+	
+	current_button_index = (current_button_index + 1) % current_buttons.size()
+	update_button_focus()
+	last_navigation_time = current_time
+
+func navigate_left():
+	"""Navigate left (for grid layouts)"""
+	# For now, same as up since we have vertical layout
+	navigate_up()
+
+func navigate_right():
+	"""Navigate right (for grid layouts)"""
+	# For now, same as down since we have vertical layout
+	navigate_down()
+
+func activate_current_button():
+	"""Activate the currently focused button"""
+	var current_buttons = get_current_button_array()
+	if current_buttons.size() == 0:
+		return
+	
+	if current_button_index >= 0 and current_button_index < current_buttons.size():
+		var target_button = current_buttons[current_button_index]
+		if target_button and is_instance_valid(target_button):
+			target_button.emit_signal("pressed")
+
+func handle_escape():
+	"""Handle escape/back button"""
+	match current_menu_level:
+		"main":
+			# Show exit dialog
+			_on_exit_game_pressed()
+		"start_game":
+			# Return to main menu
+			_on_back_to_main_pressed()
+		"how_to_play", "about_us", "credits":
+			# Return to main menu
+			_on_back_to_main_pressed()
 
 func connect_signals():
 	# Main menu buttons
@@ -192,6 +376,9 @@ func show_load_game_dialog():
 		show_no_save_data_message()
 
 func show_load_confirmation():
+	# Disable navigation when dialog is shown
+	navigation_enabled = false
+	
 	var scene_manager = get_node("/root/GameSceneManager")
 	var last_region = scene_manager.get_last_region()
 	var last_save_time = scene_manager.get_last_save_time()
@@ -205,11 +392,19 @@ func show_load_confirmation():
 	popup.get_ok_button().text = "Yes"
 	popup.get_cancel_button().text = "No"
 	
+	# Apply button theme
+	var button_theme = load("res://Resources/Themes/MenuButtonTheme.tres")
+	if button_theme:
+		popup.get_ok_button().theme = button_theme
+		popup.get_cancel_button().theme = button_theme
+		GameLogger.info("🎨 Applied MenuButtonTheme to load dialog buttons")
+	
 	# Ensure mouse is visible for dialog interaction
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	
 	popup.confirmed.connect(_on_load_confirmed)
 	popup.canceled.connect(_on_load_canceled)
+	popup.tree_exited.connect(_on_dialog_closed)
 	
 	add_child(popup)
 	popup.popup_centered()
@@ -220,6 +415,13 @@ func show_no_save_data_message():
 	popup.dialog_text = "No save data found.\nStart a new game to create a checkpoint."
 	popup.title = "No Save Data"
 	popup.add_button("OK", true, "ok")
+	
+	# Apply button theme
+	var button_theme = load("res://Resources/Themes/MenuButtonTheme.tres")
+	if button_theme:
+		popup.get_ok_button().theme = button_theme
+		popup.get_button(1).theme = button_theme  # Custom "OK" button
+		GameLogger.info("🎨 Applied MenuButtonTheme to no save dialog buttons")
 	
 	popup.confirmed.connect(_on_no_save_confirmed)
 	popup.custom_action.connect(_on_no_save_confirmed)
@@ -287,7 +489,14 @@ func show_main_menu():
 	how_to_play_panel.visible = false
 	about_us_panel.visible = false
 	credits_panel.visible = false
-	start_game_button.grab_focus()
+	
+	# Update navigation state
+	current_menu_level = "main"
+	current_button_index = 0
+	update_button_focus()
+	
+	# Set focus back to explore map button
+	explore_3d_map_button.grab_focus()
 
 func show_start_game_submenu():
 	main_menu_container.visible = false
@@ -295,6 +504,12 @@ func show_start_game_submenu():
 	how_to_play_panel.visible = false
 	about_us_panel.visible = false
 	credits_panel.visible = false
+	
+	# Update navigation state
+	current_menu_level = "start_game"
+	current_button_index = 0
+	update_button_focus()
+	
 	indonesia_barat_button.grab_focus()
 	
 	# Reset map scale when showing submenu
@@ -314,6 +529,10 @@ func show_how_to_play_panel():
 	how_to_play_panel.visible = true
 	about_us_panel.visible = false
 	credits_panel.visible = false
+	
+	# Update navigation state
+	current_menu_level = "how_to_play"
+	
 	# Play panel open sound
 	if audio_manager:
 		audio_manager.play_menu_audio("menu_open")
@@ -326,6 +545,10 @@ func show_about_us_panel():
 	how_to_play_panel.visible = false
 	about_us_panel.visible = true
 	credits_panel.visible = false
+	
+	# Update navigation state
+	current_menu_level = "about_us"
+	
 	# Play panel open sound
 	if audio_manager:
 		audio_manager.play_menu_audio("menu_open")
@@ -338,6 +561,10 @@ func show_credits_panel():
 	how_to_play_panel.visible = false
 	about_us_panel.visible = false
 	credits_panel.visible = true
+	
+	# Update navigation state
+	current_menu_level = "credits"
+	
 	# Play panel open sound
 	if audio_manager:
 		audio_manager.play_menu_audio("menu_open")
