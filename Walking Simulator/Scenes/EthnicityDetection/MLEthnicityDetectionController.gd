@@ -56,22 +56,18 @@ var available_models = {
 	"hsv": "HSV Only"
 }
 
-# Simulasi data etnis
+# Regional mapping data
 var ethnicity_data = {
-	"Jawa": {
-		"description": "[b]Etnis Jawa[/b]\nSuku Jawa adalah kelompok etnik terbesar di Indonesia yang berasal dari Jawa Tengah dan Jawa Timur. Dikenal dengan budaya yang kaya, termasuk batik, wayang, dan gamelan.",
+	"Indonesia Bagian Barat": {
+		"description": "Indonesia Bagian Barat\nWilayah Indonesia Barat meliputi Sumatera, Jawa, dan Kalimantan. Kaya akan budaya Melayu, Jawa, Sunda, dan Batak dengan tradisi batik, wayang, dan musik gamelan.",
 		"scene": "res://Scenes/IndonesiaBarat/PasarScene.tscn"
 	},
-	"Batak": {
-		"description": "[b]Etnis Batak[/b]\nSuku Batak berasal dari Sumatera Utara dengan tradisi musik gondang dan tarian tortor. Memiliki sistem kekerabatan patrilineal yang kuat.",
-		"scene": "res://Scenes/IndonesiaBarat/PasarScene.tscn"
+	"Indonesia Bagian Tengah": {
+		"description": "Indonesia Bagian Tengah\nWilayah Indonesia Tengah meliputi Sulawesi, Bali, dan Nusa Tenggara. Memiliki budaya yang beragam termasuk Sasak, Bugis, dan tradisi Hindu-Buddha di Bali.",
+		"scene": "res://Scenes/IndonesiaTengah/Tambora/TamboraScene.tscn"
 	},
-	"Sasak": {
-		"description": "[b]Etnis Sasak[/b]\nSuku Sasak adalah penduduk asli Pulau Lombok dengan tradisi tenun songket dan upacara peresean (pertarungan rotan).",
-		"scene": "res://Scenes/IndonesiaTengah/TamboraScene.tscn"
-	},
-	"Papua": {
-		"description": "[b]Etnis Papua[/b]\nSuku Papua memiliki keberagaman budaya yang luar biasa dengan tradisi ukiran, tarian yospan, dan upacara bakar batu.",
+	"Indonesia Bagian Timur": {
+		"description": "Indonesia Bagian Timur\nWilayah Indonesia Timur meliputi Papua, Maluku, dan Kepulauan Nusa Tenggara Timur. Kaya akan budaya Melanesia dengan tradisi ukiran, tarian, dan upacara adat yang unik.",
 		"scene": "res://Scenes/IndonesiaTimur/PapuaScene_Manual.tscn"
 	}
 }
@@ -91,6 +87,11 @@ func _ready():
 		fps_label.text = "FPS: 0.0"
 	if confidence_label:
 		confidence_label.text = "Confidence: 0%"
+	
+	# Setup navigation after UI is ready
+	await get_tree().process_frame
+	setup_navigation()
+	setup_button_connections()
 
 func setup_ml_webcam_manager():
 	"""Setup MLWebcamManager untuk real ML detection"""
@@ -268,9 +269,7 @@ func _on_webcam_error(message: String):
 
 func _on_ml_detection_result(ethnicity: String, confidence: float, model: String):
 	"""Handle ML detection result"""
-	# Reduce spam - only print every 5th result or when actively detecting
-	if detection_attempts % 5 == 0 or is_detecting:
-		print("🧠 ML Detection: %s (%.2f%%) using %s" % [ethnicity, confidence * 100, model])
+	print("🎯 RECEIVED ML RESULT: %s (%.2f%%) using %s, is_detecting=%s" % [ethnicity, confidence * 100, model, is_detecting])
 	
 	last_ml_result = {
 		"ethnicity": ethnicity,
@@ -284,7 +283,8 @@ func _on_ml_detection_result(ethnicity: String, confidence: float, model: String
 		confidence_label.text = "Confidence: %.1f%% (ML Model: %s)" % [confidence * 100, model]
 	
 	# If we're actively detecting and got a good result, complete detection
-	if is_detecting and confidence > 0.6:  # Minimum 60% confidence
+	if is_detecting and confidence > 0.1:  # Minimum 10% confidence (lowered from 60%)
+		print("✅ ACCEPTING ML RESULT: %s (%.2f%%) - calling detection_complete_ml" % [ethnicity, confidence * 100])
 		detection_complete_ml(ethnicity, confidence)
 	elif is_detecting:
 		detection_attempts += 1
@@ -415,6 +415,7 @@ func _on_fallback_timeout():
 
 func detection_complete_ml(ethnicity: String, confidence: float):
 	"""Complete detection with ML result"""
+	print("🎉 DETECTION_COMPLETE_ML called: %s (%.2f%%)" % [ethnicity, confidence * 100])
 	detection_timer.stop()
 	is_detecting = false
 	
@@ -428,7 +429,7 @@ func detection_complete_ml(ethnicity: String, confidence: float):
 	# Update UI dengan hasil ML
 	face_frame.border_color = Color(0, 1, 0, 0.8)
 	status_label.text = "🧠 Deteksi ML berhasil!"
-	ethnicity_label.text = "Etnis Terdeteksi: " + ethnicity
+	ethnicity_label.text = "Wilayah Terdeteksi: " + ethnicity
 	description_label.text = ethnicity_data[ethnicity]["description"]
 	
 	result_container.visible = true
@@ -437,6 +438,9 @@ func detection_complete_ml(ethnicity: String, confidence: float):
 	# Tampilkan tombol skip ke map
 	if skip_to_map_button:
 		skip_to_map_button.visible = true
+	
+	# Update navigation after UI changes
+	update_button_focus()
 	
 	# Update confidence label with model name
 	if confidence_label:
@@ -464,7 +468,7 @@ func detection_complete_simulation():
 	# Update UI dengan hasil simulasi
 	face_frame.border_color = Color(0, 1, 0, 0.8)
 	status_label.text = "⚠️ Deteksi simulasi (ML gagal)"
-	ethnicity_label.text = "Etnis Terdeteksi: " + detected_ethnicity_result
+	ethnicity_label.text = "Wilayah Terdeteksi: " + detected_ethnicity_result
 	description_label.text = ethnicity_data[detected_ethnicity_result]["description"]
 	
 	result_container.visible = true
@@ -473,6 +477,9 @@ func detection_complete_simulation():
 	# Tampilkan tombol skip ke map
 	if skip_to_map_button:
 		skip_to_map_button.visible = true
+	
+	# Update navigation after UI changes
+	update_button_focus()
 	
 	# Update confidence label with simulation indicator
 	if confidence_label:
@@ -486,15 +493,6 @@ func detection_complete_simulation():
 	create_countdown_animation()
 	
 	print("⚠️ Fallback to simulation: %s (%.2f%%)" % [detected_ethnicity_result, detected_confidence * 100])
-
-func _on_skip_to_map_pressed():
-	# Langsung redirect ke scene map sesuai hasil deteksi
-	if detected_ethnicity_result != "":
-		loading_overlay.visible = true
-		spinner_rotation = 0.0
-		var target_scene = ethnicity_data[detected_ethnicity_result]["scene"]
-		cleanup_resources()
-		get_tree().change_scene_to_file(target_scene)
 
 func create_countdown_animation():
 	var countdown_timer = Timer.new()
@@ -563,3 +561,212 @@ func cleanup_resources():
 func _notification(what):
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_PREDELETE:
 		cleanup_resources()
+
+# Keyboard and Joystick Navigation
+var navigation_enabled: bool = true
+var current_button_index: int = 0
+var last_navigation_time: float = 0.0
+var navigation_cooldown: float = 0.15  # 150ms cooldown between navigations
+
+func setup_navigation():
+	"""Setup keyboard and joystick navigation"""
+	navigation_enabled = true
+	current_button_index = 0
+	update_button_focus()
+	print("🎮 Navigation system initialized")
+
+func setup_button_connections():
+	"""Connect button signals"""
+	var back_button = get_node("MainContainer/ButtonContainer/BackButton")
+	if back_button and not back_button.pressed.is_connected(_on_back_button_pressed):
+		back_button.pressed.connect(_on_back_button_pressed)
+		print("✅ Back button connected")
+	
+	if start_button and not start_button.pressed.is_connected(start_ml_detection):
+		start_button.pressed.connect(start_ml_detection)
+		print("✅ Start detection button connected")
+	
+	if skip_to_map_button and not skip_to_map_button.pressed.is_connected(_on_skip_to_map_pressed):
+		skip_to_map_button.pressed.connect(_on_skip_to_map_pressed)
+		print("✅ Skip to map button connected")
+
+func get_navigable_buttons() -> Array[Button]:
+	"""Get list of currently navigable buttons"""
+	var buttons: Array[Button] = []
+	
+	# Always include StartDetectionButton and BackButton
+	if start_button and start_button.visible:
+		buttons.append(start_button)
+	if get_node("MainContainer/ButtonContainer/BackButton") and get_node("MainContainer/ButtonContainer/BackButton").visible:
+		buttons.append(get_node("MainContainer/ButtonContainer/BackButton"))
+	
+	# Include SkipToMapButton if visible
+	if skip_to_map_button and skip_to_map_button.visible:
+		buttons.append(skip_to_map_button)
+	
+	return buttons
+
+func update_button_focus():
+	"""Update visual focus on current button"""
+	var buttons = get_navigable_buttons()
+	if buttons.size() == 0:
+		return
+	
+	# Clear focus from all buttons
+	for button in buttons:
+		if button and is_instance_valid(button):
+			button.release_focus()
+	
+	# Set focus to current button
+	if current_button_index >= 0 and current_button_index < buttons.size():
+		var target_button = buttons[current_button_index]
+		if target_button and is_instance_valid(target_button):
+			target_button.grab_focus()
+
+func _input(event):
+	"""Handle keyboard and joystick input for navigation"""
+	if not navigation_enabled:
+		return
+	
+	# Handle keyboard input
+	if event is InputEventKey and event.pressed:
+		var viewport = get_viewport()
+		if not viewport:
+			return
+			
+		match event.keycode:
+			KEY_UP, KEY_LEFT:
+				navigate_up()
+				viewport.set_input_as_handled()
+			KEY_DOWN, KEY_RIGHT:
+				navigate_down()
+				viewport.set_input_as_handled()
+			KEY_ENTER, KEY_SPACE:
+				activate_current_button()
+				viewport.set_input_as_handled()
+			KEY_ESCAPE:
+				handle_escape()
+				viewport.set_input_as_handled()
+	
+	# Handle joystick input
+	elif event is InputEventJoypadButton and event.pressed:
+		var viewport = get_viewport()
+		if not viewport:
+			return
+			
+		match event.button_index:
+			JOY_BUTTON_DPAD_UP:
+				navigate_up()
+				viewport.set_input_as_handled()
+			JOY_BUTTON_DPAD_DOWN:
+				navigate_down()
+				viewport.set_input_as_handled()
+			JOY_BUTTON_DPAD_LEFT:
+				navigate_up()
+				viewport.set_input_as_handled()
+			JOY_BUTTON_DPAD_RIGHT:
+				navigate_down()
+				viewport.set_input_as_handled()
+			JOY_BUTTON_A:  # A button on Xbox, X on PlayStation
+				activate_current_button()
+				viewport.set_input_as_handled()
+			JOY_BUTTON_B:  # B button on Xbox, Circle on PlayStation
+				handle_escape()
+				viewport.set_input_as_handled()
+	
+	# Handle joystick analog stick
+	elif event is InputEventJoypadMotion:
+		var viewport = get_viewport()
+		if not viewport:
+			return
+			
+		# Left stick vertical movement
+		if event.axis == JOY_AXIS_LEFT_Y:
+			if event.axis_value < -0.5:  # Up
+				navigate_up()
+				viewport.set_input_as_handled()
+			elif event.axis_value > 0.5:  # Down
+				navigate_down()
+				viewport.set_input_as_handled()
+
+func navigate_up():
+	"""Navigate to previous button"""
+	var current_time = Time.get_unix_time_from_system()
+	if current_time - last_navigation_time < navigation_cooldown:
+		return
+	
+	var buttons = get_navigable_buttons()
+	if buttons.size() == 0:
+		return
+	
+	current_button_index = (current_button_index - 1 + buttons.size()) % buttons.size()
+	update_button_focus()
+	last_navigation_time = current_time
+
+func navigate_down():
+	"""Navigate to next button"""
+	var current_time = Time.get_unix_time_from_system()
+	if current_time - last_navigation_time < navigation_cooldown:
+		return
+	
+	var buttons = get_navigable_buttons()
+	if buttons.size() == 0:
+		return
+	
+	current_button_index = (current_button_index + 1) % buttons.size()
+	update_button_focus()
+	last_navigation_time = current_time
+
+func activate_current_button():
+	"""Activate the currently focused button"""
+	var buttons = get_navigable_buttons()
+	if current_button_index >= 0 and current_button_index < buttons.size():
+		var button = buttons[current_button_index]
+		if button and is_instance_valid(button):
+			button.emit_signal("pressed")
+
+func handle_escape():
+	"""Handle ESC key - go back to main menu"""
+	print("🎮 ESC pressed - returning to main menu")
+	_on_back_button_pressed()
+
+func _on_back_button_pressed():
+	"""Handle back button press - return to main menu"""
+	print("🔙 Back button pressed - returning to main menu")
+	
+	# Use a safer approach - call deferred to avoid tree issues
+	if is_inside_tree():
+		call_deferred("_change_to_main_menu")
+	else:
+		print("⚠️ Cannot change scene - node not in tree")
+
+func _change_to_main_menu():
+	"""Deferred function to change to main menu"""
+	var tree = get_tree()
+	if tree:
+		tree.change_scene_to_file("res://Scenes/MainMenu/MainMenu.tscn")
+	else:
+		print("⚠️ Tree is null in deferred call")
+
+func _on_skip_to_map_pressed():
+	"""Handle skip to map button press - redirect to detected region"""
+	print("🗺️ Skip to map pressed - redirecting to detected region")
+	if detected_ethnicity_result != "" and ethnicity_data.has(detected_ethnicity_result):
+		var target_scene = ethnicity_data[detected_ethnicity_result]["scene"]
+		print("🎯 Redirecting to: " + target_scene)
+		
+		# Use deferred call to avoid tree issues
+		if is_inside_tree():
+			call_deferred("_change_to_region_scene", target_scene)
+		else:
+			print("⚠️ Cannot change scene - node not in tree")
+	else:
+		print("⚠️ No valid ethnicity result to redirect to")
+
+func _change_to_region_scene(target_scene: String):
+	"""Deferred function to change to region scene"""
+	var tree = get_tree()
+	if tree:
+		tree.change_scene_to_file(target_scene)
+	else:
+		print("⚠️ Tree is null in deferred call")

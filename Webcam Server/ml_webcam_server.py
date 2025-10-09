@@ -262,14 +262,22 @@ class MLEthnicityDetector:
             # Map prediction to ethnicity names (5 classes: Banjar, Bugis, Javanese, Malay, Sundanese)
             # Mapping: Javanese/Sundanese/Malay → Jawa, Banjar → Sasak, Bugis → Papua
             ethnicity_map = {
-                0: "Sasak",     # Banjar
-                1: "Papua",     # Bugis
-                2: "Jawa",      # Javanese
-                3: "Jawa",      # Malay
-                4: "Jawa"       # Sundanese
+                0: "Indonesia Bagian Tengah",     # Banjar -> Indonesia Tengah
+                1: "Indonesia Bagian Timur",     # Bugis -> Indonesia Timur  
+                2: "Indonesia Bagian Barat",     # Javanese -> Indonesia Barat
+                3: "Indonesia Bagian Barat",     # Malay -> Indonesia Barat
+                4: "Indonesia Bagian Barat"      # Sundanese -> Indonesia Barat
             }
             
+            print(f"🔍 DEBUG: ML prediction={prediction}, confidence={confidence:.3f}")
             ethnicity = ethnicity_map.get(prediction, "Unknown")
+            print(f"🔍 DEBUG: Mapped ethnicity='{ethnicity}'")
+            
+            # If prediction is unknown, fallback to simulation
+            if ethnicity == "Unknown":
+                print(f"⚠️ Unknown prediction {prediction}, falling back to simulation")
+                return self._get_simulation_result()
+            
             return ethnicity, confidence
             
         except Exception as e:
@@ -654,9 +662,9 @@ class MLWebcamServer:
     
     def _get_simulation_result(self):
         """Get simulation result (fallback when ML fails)"""
-        # Only include ethnicities that match the actual model output
-        ethnicities = ["Jawa", "Sasak", "Papua"]  # Removed "Batak" as it's not in the model
-        ethnicity = ethnicities[hash(str(time.time())) % len(ethnicities)]
+        # Use regional names that match the Godot client
+        regions = ["Indonesia Bagian Barat", "Indonesia Bagian Tengah", "Indonesia Bagian Timur"]
+        ethnicity = regions[hash(str(time.time())) % len(regions)]
         confidence = 0.80 + (hash(str(time.time())) % 20) / 100.0  # 80-99%
         return ethnicity, confidence
     

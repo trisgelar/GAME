@@ -107,8 +107,8 @@ func _handle_packet(packet: PackedByteArray):
 	if packet.size() == 0:
 		return
 	
-	# Debug: Log all received packets
-	print("🔍 DEBUG: Received packet size: %d bytes" % packet.size())
+	# Debug: Log all received packets - commented out to reduce spam
+	# print("🔍 DEBUG: Received packet size: %d bytes" % packet.size())
 	
 	# Check for REGISTERED response
 	var message = packet.get_string_from_utf8()
@@ -135,8 +135,8 @@ func _handle_packet(packet: PackedByteArray):
 	var total_packets = (header_bytes[4] << 24) | (header_bytes[5] << 16) | (header_bytes[6] << 8) | header_bytes[7]
 	var packet_index = (header_bytes[8] << 24) | (header_bytes[9] << 16) | (header_bytes[10] << 8) | header_bytes[11]
 	
-	# Debug: Log header values
-	print("🔍 DEBUG: Header - seq:%d, total:%d, idx:%d" % [sequence, total_packets, packet_index])
+	# Debug: Log header values - commented out to reduce spam
+	# print("🔍 DEBUG: Header - seq:%d, total:%d, idx:%d" % [sequence, total_packets, packet_index])
 	
 	# Validate header values
 	if total_packets == 0 or total_packets > 1000:
