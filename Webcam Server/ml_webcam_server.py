@@ -16,6 +16,16 @@ import json
 from pathlib import Path
 from skimage.feature import hog, graycomatrix, graycoprops, local_binary_pattern
 
+# Import the logger system
+try:
+    from src.core.logger import MLServerLogger
+    logger = MLServerLogger()
+except ImportError:
+    # Fallback to basic logging if src structure not available
+    import logging
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(message)s')
+    logger = logging.getLogger('ml_server')
+
 class MLEthnicityDetector:
     def __init__(self, models_dir="models/run_20250925_133309"):
         self.models_dir = Path(models_dir)
@@ -25,7 +35,7 @@ class MLEthnicityDetector:
         
     def load_models(self):
         """Load all available ML models"""
-        print("🤖 Loading ML models...")
+        logger.info("🤖 Loading ML models...")
         
         # Available models
         model_files = {
@@ -44,11 +54,11 @@ class MLEthnicityDetector:
                 try:
                     with open(model_path, 'rb') as f:
                         self.models[model_name] = pickle.load(f)
-                    print(f"✅ Loaded {model_name} model")
+                    logger.info(f"✅ Loaded {model_name} model")
                 except Exception as e:
-                    print(f"❌ Failed to load {model_name}: {e}")
+                    logger.error(f"❌ Failed to load {model_name}: {e}")
             else:
-                print(f"⚠️ Model not found: {filename}")
+                logger.warning(f"⚠️ Model not found: {filename}")
         
         # Load feature configuration if available
         self.load_feature_config()
@@ -283,7 +293,7 @@ class MLWebcamServer:
         # ML Detector - Use config path or fallback
         models_dir = self.config.get('ml', {}).get('models_dir', 'models/run_20250925_133309')
         models_path = Path(__file__).parent / models_dir
-        print(f"🔍 Looking for models in: {models_path}")
+        logger.info(f"🔍 Looking for models in: {models_path}")
         self.ml_detector = MLEthnicityDetector(str(models_path))
         
         # Use config default model or fallback
@@ -314,13 +324,13 @@ class MLWebcamServer:
             if config_path.exists():
                 with open(config_path, 'r', encoding='utf-8') as f:
                     config = json.load(f)
-                print(f"✅ Loaded configuration from: {config_path}")
+                logger.info(f"✅ Loaded configuration from: {config_path}")
                 return config
             else:
-                print(f"⚠️ Config file not found: {config_path}, using defaults")
+                logger.warning(f"⚠️ Config file not found: {config_path}, using defaults")
                 return {}
         except Exception as e:
-            print(f"❌ Error loading config: {e}, using defaults")
+            logger.error(f"❌ Error loading config: {e}, using defaults")
             return {}
         
     def initialize_camera(self, camera_id=None):
@@ -328,19 +338,20 @@ class MLWebcamServer:
         if camera_id is None:
             camera_id = self.config.get('camera', {}).get('camera_id', 0)
         
-        print("🎥 Initializing ML-enhanced camera...")
-        print(f"🔍 Attempting to open camera ID: {camera_id}")
+        logger.info("🎥 Initializing ML-enhanced camera...")
+        logger.info(f"🔍 Attempting to open camera ID: {camera_id}")
         self.camera_id = camera_id  # Store camera ID
         
-        # First, try a quick test to see if camera is available
-        print("🔍 Testing camera availability...")
-        test_camera = cv2.VideoCapture(camera_id)
-        if not test_camera.isOpened():
-            print("❌ Camera is not available - may be in use by another application")
-            test_camera.release()
-            return False
-        test_camera.release()
-        print("✅ Camera appears to be available")
+        # Skip camera availability test - it takes too long and is not necessary
+        # logger.info("🔍 Testing camera availability...")
+        # test_camera = cv2.VideoCapture(camera_id)
+        # if not test_camera.isOpened():
+        #     logger.error("❌ Camera is not available - may be in use by another application")
+        #     test_camera.release()
+        #     return False
+        # test_camera.release()
+        # logger.info("✅ Camera appears to be available")
+        logger.info("🚀 Skipping camera availability test for faster startup...")
         
         # Try different backends in order of preference
         backends = [cv2.CAP_DSHOW, cv2.CAP_ANY]
@@ -506,22 +517,31 @@ class MLWebcamServer:
             try:
                 data, addr = self.server_socket.recvfrom(1024)
                 message = data.decode('utf-8')
+                debug_msg = f"🔍 DEBUG: Received message from {addr}: '{message}'"
+                # print(debug_msg)  # Commented out to reduce terminal spam
+                logger.info(debug_msg)
                 
                 if message == "REGISTER":
                     if addr not in self.clients:
                         self.clients.add(addr)
-                        print(f"✅ Client registered: {addr} (Total: {len(self.clients)})")
+                        reg_msg = f"✅ Client registered: {addr} (Total: {len(self.clients)})"
+                        print(reg_msg)  # Keep this one - important client registration
+                        logger.info(reg_msg)
                         
                         # ✅ DUAL WEBCAM: Camera already initialized at startup
                         # Just send confirmation
                         self.server_socket.sendto("REGISTERED".encode('utf-8'), addr)
+                        # logger.info(f"📤 Sent REGISTERED response to {addr}")  # Commented out - too verbose
                     else:
                         # Client already registered, send REGISTERED immediately
                         self.server_socket.sendto("REGISTERED".encode('utf-8'), addr)
+                        # logger.info(f"📤 Sent REGISTERED response to {addr} (already registered)")  # Commented out - too verbose
                 
                 elif message == "UNREGISTER":
                     self.clients.discard(addr)
-                    print(f"❌ Client unregistered: {addr} (Total: {len(self.clients)})")
+                    unreg_msg = f"❌ Client unregistered: {addr} (Total: {len(self.clients)})"
+                    print(unreg_msg)  # Keep this one - important client unregistration
+                    logger.info(unreg_msg)
                     
                     # ✅ DUAL WEBCAM: Keep camera running (don't release)
                     # With dedicated webcam, camera stays active
@@ -657,11 +677,9 @@ class MLWebcamServer:
         while self.running:
             current_time = time.time()
             
-            # ✅ DUAL WEBCAM: Camera stays active continuously (no pause)
-            # With dedicated webcam, we don't need to pause/resume
+            # Skip if no clients (like working server)
             if len(self.clients) == 0:
-                # Just skip sending, but keep camera running
-                time.sleep(0.1)  # Light sleep to avoid busy loop
+                time.sleep(0.1)
                 continue
             
             # Check if camera is initialized
@@ -706,13 +724,19 @@ class MLWebcamServer:
                 # Debug: Print frame sending info (like Topeng server)
                 if self.frame_count % 60 == 0:  # Print every 60 frames (about every 4 seconds at 15fps)
                     print(f"📤 Frame {self.frame_count}: {len(frame_data)//1024}KB → {len(self.clients)} clients")
+                    logger.info(f"📤 Frame {self.frame_count}: {len(frame_data)//1024}KB → {len(self.clients)} clients")
             else:
                 print("❌ Failed to encode frame as JPEG")
     
     def send_frame_to_clients(self, frame_data):
+        debug_msg = f"🔍 DEBUG: send_frame_to_clients called with {len(frame_data) if frame_data else 0} bytes, {len(self.clients)} clients"
+        # print(debug_msg)  # Commented out to reduce terminal spam - check logs instead
+        logger.info(debug_msg)  # Temporarily re-enabled to debug frame sending
         if not frame_data or len(self.clients) == 0:
             if len(self.clients) == 0:
-                print("⚠️ No clients to send frame to")
+                no_clients_msg = "⚠️ No clients to send frame to"
+                # print(no_clients_msg)  # Commented out to reduce terminal spam - check logs instead
+                logger.info(no_clients_msg)  # Temporarily re-enabled to debug
             return
         
         self.sequence_number = (self.sequence_number + 1) % 65536
@@ -728,8 +752,12 @@ class MLWebcamServer:
                     start_pos = packet_index * payload_size
                     end_pos = min(start_pos + payload_size, frame_size)
                     
-                    header = struct.pack("!III", self.sequence_number, packet_index, total_packets)
+                    header = struct.pack("!III", self.sequence_number, total_packets, packet_index)
                     udp_packet = header + frame_data[start_pos:end_pos]
+                    
+                    # Debug: Log what we're sending
+                    if packet_index == 0:  # Only log first packet of each frame
+                        print(f"🔍 ML Server sending: seq={self.sequence_number}, total={total_packets}, idx={packet_index}, frame_size={frame_size}")
                     
                     self.server_socket.sendto(udp_packet, client_addr)
                     

@@ -53,7 +53,7 @@
     ]
   },
   "camera": {
-    "camera_id": 0,
+    "camera_id": 1,
     "backend": "opencv",
     "auto_resize": true,
     "notes": "Camera ID 0 = First USB webcam (dedicated to ML/Ethnicity server)"
