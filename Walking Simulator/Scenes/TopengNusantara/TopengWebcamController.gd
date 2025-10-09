@@ -6,8 +6,17 @@ extends Control
 @onready var mask_display = $MainContainer/WebcamContainer/WebcamPanel/WebcamFeed/MaskOverlay/MaskDisplay
 @onready var mask_info_label = $MainContainer/InfoContainer/MaskInfoLabel
 @onready var status_label = $MainContainer/InfoContainer/StatusLabel
+@onready var pilih_topeng_button = $MainContainer/ButtonContainer/PilihTopengButton
+@onready var menu_utama_button = $MainContainer/ButtonContainer/MenuUtamaButton
 # FPS label is optional - may not exist in all scenes
 var fps_label: Label = null
+
+# Navigation System
+var buttons: Array[Button] = []
+var current_button_index: int = 0
+var navigation_enabled: bool = true
+var last_navigation_time: float = 0.0
+var navigation_cooldown: float = 0.2
 
 # Webcam Manager - will be loaded manually
 var webcam_manager: Node = null
@@ -28,6 +37,11 @@ func _ready() -> void:
 	# Try to find FPS label (optional)
 	if has_node("MainContainer/WebcamContainer/WebcamPanel/WebcamFeed/FPSLabel"):
 		fps_label = $MainContainer/WebcamContainer/WebcamPanel/WebcamFeed/FPSLabel
+	
+	# Setup navigation
+	setup_navigation()
+	
+	if fps_label:
 		print("fps_label found and assigned")
 	else:
 		print("fps_label not found - will skip FPS display")
@@ -475,3 +489,151 @@ func send_default_mask() -> void:
 					break
 	
 	udp.close()
+
+func setup_navigation():
+	"""Setup keyboard/joystick navigation for buttons"""
+	buttons.clear()
+	buttons.append(pilih_topeng_button)
+	buttons.append(menu_utama_button)
+	current_button_index = 0
+	update_button_focus()
+	
+	# Set initial focus
+	pilih_topeng_button.grab_focus()
+	print("🎮 TopengWebcam navigation setup completed with " + str(buttons.size()) + " buttons")
+
+func _input(event):
+	"""Handle keyboard and joystick input for menu navigation"""
+	# Check if viewport is still valid (prevent errors during scene transitions)
+	if not get_viewport():
+		return
+	
+	if not navigation_enabled:
+		return
+	
+	# Handle keyboard input
+	if event is InputEventKey and event.pressed:
+		var viewport = get_viewport()
+		if not viewport:
+			return
+			
+		match event.keycode:
+			KEY_UP:
+				navigate_up()
+				viewport.set_input_as_handled()
+			KEY_DOWN:
+				navigate_down()
+				viewport.set_input_as_handled()
+			KEY_LEFT:
+				navigate_left()
+				viewport.set_input_as_handled()
+			KEY_RIGHT:
+				navigate_right()
+				viewport.set_input_as_handled()
+			KEY_ENTER, KEY_SPACE:
+				activate_current_button()
+				viewport.set_input_as_handled()
+			KEY_ESCAPE:
+				handle_escape()
+				viewport.set_input_as_handled()
+	
+	# Handle joystick input
+	elif event is InputEventJoypadButton and event.pressed:
+		var viewport = get_viewport()
+		if not viewport:
+			return
+			
+		match event.button_index:
+			JOY_BUTTON_A:  # A button (Xbox style)
+				activate_current_button()
+				viewport.set_input_as_handled()
+			JOY_BUTTON_B:  # B button (Xbox style)
+				handle_escape()
+				viewport.set_input_as_handled()
+	
+	elif event is InputEventJoypadMotion:
+		# Handle analog stick movement
+		var viewport = get_viewport()
+		if not viewport:
+			return
+			
+		if abs(event.axis_value) > 0.5:  # Dead zone
+			match event.axis:
+				JOY_AXIS_LEFT_Y:
+					if event.axis_value < -0.5:  # Up
+						navigate_up()
+						viewport.set_input_as_handled()
+					elif event.axis_value > 0.5:  # Down
+						navigate_down()
+						viewport.set_input_as_handled()
+				JOY_AXIS_LEFT_X:
+					if event.axis_value < -0.5:  # Left
+						navigate_left()
+						viewport.set_input_as_handled()
+					elif event.axis_value > 0.5:  # Right
+						navigate_right()
+						viewport.set_input_as_handled()
+
+func navigate_up():
+	"""Navigate to previous button"""
+	var current_time = Time.get_unix_time_from_system()
+	if current_time - last_navigation_time < navigation_cooldown:
+		return
+	
+	if buttons.size() == 0:
+		return
+	
+	current_button_index = (current_button_index - 1 + buttons.size()) % buttons.size()
+	update_button_focus()
+	last_navigation_time = current_time
+
+func navigate_down():
+	"""Navigate to next button"""
+	var current_time = Time.get_unix_time_from_system()
+	if current_time - last_navigation_time < navigation_cooldown:
+		return
+	
+	if buttons.size() == 0:
+		return
+	
+	current_button_index = (current_button_index + 1) % buttons.size()
+	update_button_focus()
+	last_navigation_time = current_time
+
+func navigate_left():
+	"""Navigate left (same as up for horizontal layout)"""
+	navigate_up()
+
+func navigate_right():
+	"""Navigate right (same as down for horizontal layout)"""
+	navigate_down()
+
+func activate_current_button():
+	"""Activate the currently focused button"""
+	if buttons.size() == 0:
+		return
+	
+	if current_button_index >= 0 and current_button_index < buttons.size():
+		var target_button = buttons[current_button_index]
+		if target_button and is_instance_valid(target_button):
+			target_button.emit_signal("pressed")
+
+func handle_escape():
+	"""Handle escape/back button"""
+	menu_utama_button.emit_signal("pressed")
+
+func update_button_focus():
+	"""Update visual focus on current button"""
+	if buttons.size() == 0:
+		return
+	
+	# Clear focus from all buttons
+	for button in buttons:
+		if button and is_instance_valid(button):
+			button.release_focus()
+	
+	# Set focus to current button
+	if current_button_index >= 0 and current_button_index < buttons.size():
+		var current_button = buttons[current_button_index]
+		if current_button and is_instance_valid(current_button):
+			current_button.grab_focus()

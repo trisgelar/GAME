@@ -48,6 +48,19 @@ var region_placeholders: Dictionary = {}
 var map_scale: float = 0.6
 var camera_initial_position: Vector3 = Vector3(20, 80, 120)  # Higher and further back to see all Indonesia
 
+# Navigation System
+var buttons: Array[Button] = []
+var current_button_index: int = 0
+var navigation_enabled: bool = true
+var last_navigation_time: float = 0.0
+var navigation_cooldown: float = 0.2
+
+# Region Focus System for Joystick
+var focused_region_id: String = ""
+var region_focus_enabled: bool = true
+var last_region_focus_time: float = 0.0
+var region_focus_cooldown: float = 0.3
+
 func _ready():
 	GameLogger.info("🚀 Indonesia3DMapControllerFinal _ready() called!")
 	_load_config()
@@ -55,6 +68,7 @@ func _ready():
 	setup_ui()
 	setup_camera()
 	connect_signals()
+	setup_navigation()
 	# Setup visual enhancement systems first (before placeholders)
 	_setup_simple_terrain_system()
 	_setup_artistic_enhancement()
@@ -64,6 +78,10 @@ func _ready():
 	# Create placeholders AFTER shader system to prevent scale reset
 	_create_region_placeholders()
 	GameLogger.info("🚀 Final Indonesia3D Map initialization completed!")
+
+func _process(delta):
+	"""Update region focus detection for joystick interaction"""
+	_update_region_focus()
 
 func _load_config():
 	"""Load configuration with coordinates and settings"""
@@ -415,6 +433,9 @@ func _show_region_info(region_id: String):
 			if cooking_game_button:
 				cooking_game_button.visible = false
 			
+			# Update navigation to include new visible buttons
+			update_navigation_buttons()
+			
 			GameLogger.info("🎯 Selected region: " + region.name + " | Panel positioned at: " + str(region_info_panel.position))
 			break
 
@@ -498,6 +519,20 @@ func _create_region_placeholders():
 		shape.shape = box_shape
 		body.add_child(shape)
 		node.add_child(body)
+		
+		# Add Area3D for joystick interaction
+		var area := Area3D.new()
+		area.name = "PlaceholderArea"
+		var area_shape := CollisionShape3D.new()
+		var area_box_shape := BoxShape3D.new()
+		area_box_shape.size = Vector3(20.0, 25.0, 20.0)  # Slightly larger for easier joystick interaction
+		area_shape.shape = area_box_shape
+		area.add_child(area_shape)
+		node.add_child(area)
+		
+		# Store region info in the area for easy access
+		area.set_meta("region_id", region.id)
+		area.set_meta("region_name", region.name)
 		
 		# Add floating label (proportional to 5x placeholder)
 		var label := Label3D.new()
@@ -597,3 +632,234 @@ func get_region_position(region_id: String) -> Vector3:
 		if region.id == region_id:
 			return region.position
 	return Vector3.ZERO
+
+func setup_navigation():
+	"""Setup keyboard/joystick navigation for buttons"""
+	buttons.clear()
+	buttons.append(back_to_menu_button)
+	
+	# Add region buttons if they're visible
+	if cooking_game_button.visible:
+		buttons.append(cooking_game_button)
+	if explore_region_button.visible:
+		buttons.append(explore_region_button)
+	
+	current_button_index = 0
+	update_button_focus()
+	
+	# Set initial focus to back button
+	back_to_menu_button.grab_focus()
+	GameLogger.info("🎮 Indonesia3DMap navigation setup completed with " + str(buttons.size()) + " buttons")
+
+func update_navigation_buttons():
+	"""Update which buttons are available for navigation"""
+	buttons.clear()
+	buttons.append(back_to_menu_button)
+	
+	# Add region buttons if they're visible
+	if cooking_game_button.visible:
+		buttons.append(cooking_game_button)
+	if explore_region_button.visible:
+		buttons.append(explore_region_button)
+	
+	# Ensure current index is valid
+	if current_button_index >= buttons.size():
+		current_button_index = 0
+	
+	update_button_focus()
+
+func _input(event):
+	"""Handle keyboard and joystick input for menu navigation"""
+	# Check if viewport is still valid (prevent errors during scene transitions)
+	if not get_viewport():
+		return
+	
+	if not navigation_enabled:
+		return
+	
+	# Handle keyboard input
+	if event is InputEventKey and event.pressed:
+		var viewport = get_viewport()
+		if not viewport:
+			return
+			
+		match event.keycode:
+			KEY_UP:
+				navigate_up()
+				viewport.set_input_as_handled()
+			KEY_DOWN:
+				navigate_down()
+				viewport.set_input_as_handled()
+			KEY_LEFT:
+				navigate_left()
+				viewport.set_input_as_handled()
+			KEY_RIGHT:
+				navigate_right()
+				viewport.set_input_as_handled()
+			KEY_ENTER, KEY_SPACE:
+				activate_current_button()
+				viewport.set_input_as_handled()
+			KEY_ESCAPE:
+				handle_escape()
+				viewport.set_input_as_handled()
+	
+	# Handle joystick input
+	elif event is InputEventJoypadButton and event.pressed:
+		var viewport = get_viewport()
+		if not viewport:
+			return
+			
+		match event.button_index:
+			JOY_BUTTON_A:  # A button (Xbox style)
+				if focused_region_id != "":
+					# Interact with focused region
+					_interact_with_focused_region()
+					viewport.set_input_as_handled()
+				else:
+					# Fall back to button activation
+					activate_current_button()
+					viewport.set_input_as_handled()
+			JOY_BUTTON_B:  # B button (Xbox style)
+				handle_escape()
+				viewport.set_input_as_handled()
+	
+	elif event is InputEventJoypadMotion:
+		# Handle analog stick movement
+		var viewport = get_viewport()
+		if not viewport:
+			return
+			
+		if abs(event.axis_value) > 0.5:  # Dead zone
+			match event.axis:
+				JOY_AXIS_LEFT_Y:
+					if event.axis_value < -0.5:  # Up
+						navigate_up()
+						viewport.set_input_as_handled()
+					elif event.axis_value > 0.5:  # Down
+						navigate_down()
+						viewport.set_input_as_handled()
+				JOY_AXIS_LEFT_X:
+					if event.axis_value < -0.5:  # Left
+						navigate_left()
+						viewport.set_input_as_handled()
+					elif event.axis_value > 0.5:  # Right
+						navigate_right()
+						viewport.set_input_as_handled()
+
+func navigate_up():
+	"""Navigate to previous button"""
+	var current_time = Time.get_unix_time_from_system()
+	if current_time - last_navigation_time < navigation_cooldown:
+		return
+	
+	if buttons.size() == 0:
+		return
+	
+	current_button_index = (current_button_index - 1 + buttons.size()) % buttons.size()
+	update_button_focus()
+	last_navigation_time = current_time
+
+func navigate_down():
+	"""Navigate to next button"""
+	var current_time = Time.get_unix_time_from_system()
+	if current_time - last_navigation_time < navigation_cooldown:
+		return
+	
+	if buttons.size() == 0:
+		return
+	
+	current_button_index = (current_button_index + 1) % buttons.size()
+	update_button_focus()
+	last_navigation_time = current_time
+
+func navigate_left():
+	"""Navigate left (same as up for vertical layout)"""
+	navigate_up()
+
+func navigate_right():
+	"""Navigate right (same as down for vertical layout)"""
+	navigate_down()
+
+func activate_current_button():
+	"""Activate the currently focused button"""
+	if buttons.size() == 0:
+		return
+	
+	if current_button_index >= 0 and current_button_index < buttons.size():
+		var target_button = buttons[current_button_index]
+		if target_button and is_instance_valid(target_button):
+			target_button.emit_signal("pressed")
+
+func handle_escape():
+	"""Handle escape/back button"""
+	back_to_menu_button.emit_signal("pressed")
+
+func update_button_focus():
+	"""Update visual focus on current button"""
+	if buttons.size() == 0:
+		return
+	
+	# Clear focus from all buttons
+	for button in buttons:
+		if button and is_instance_valid(button):
+			button.release_focus()
+	
+	# Set focus to current button
+	if current_button_index >= 0 and current_button_index < buttons.size():
+		var current_button = buttons[current_button_index]
+		if current_button and is_instance_valid(current_button):
+			current_button.grab_focus()
+
+func _interact_with_focused_region():
+	"""Handle A button interaction with focused region"""
+	if focused_region_id == "":
+		return
+	
+	GameLogger.info("🎮 Interacting with focused region: " + focused_region_id)
+	
+	# Show region info (same as clicking on placeholder)
+	_show_region_info(focused_region_id)
+	
+	# Auto-focus the explore region button if it's visible
+	if explore_region_button.visible:
+		# Find the button index for explore region button
+		for i in range(buttons.size()):
+			if buttons[i] == explore_region_button:
+				current_button_index = i
+				update_button_focus()
+				explore_region_button.grab_focus()
+				break
+
+func _update_region_focus():
+	"""Update which region the camera is looking at for joystick interaction"""
+	if not region_focus_enabled:
+		return
+	
+	var current_time = Time.get_unix_time_from_system()
+	if current_time - last_region_focus_time < region_focus_cooldown:
+		return
+	
+	# Cast a ray from camera forward to detect regions
+	var space_state = get_world_3d().direct_space_state
+	var camera_pos = map_camera.global_position
+	var camera_forward = -map_camera.global_transform.basis.z  # Camera forward direction
+	var query = PhysicsRayQueryParameters3D.create(camera_pos, camera_pos + camera_forward * 1000.0)
+	
+	var result = space_state.intersect_ray(query)
+	if result:
+		var collider = result.collider
+		if collider and collider.get_parent():
+			var parent_node = collider.get_parent()
+			if parent_node.has_method("get_meta") and parent_node.has_meta("region_id"):
+				var region_id = parent_node.get_meta("region_id")
+				if region_id != focused_region_id:
+					focused_region_id = region_id
+					var region_name = parent_node.get_meta("region_name")
+					GameLogger.info("🎯 Focused on region: " + region_name + " (" + region_id + ")")
+					last_region_focus_time = current_time
+					return
+	
+	# No region detected
+	if focused_region_id != "":
+		focused_region_id = ""
+		GameLogger.info("🎯 No region focused")

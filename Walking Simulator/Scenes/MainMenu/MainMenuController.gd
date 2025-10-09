@@ -23,6 +23,7 @@ extends Control
 @onready var subtitle_label: Label = $MainMenuContainer/SubtitleLabel
 @onready var start_game_button: Button = $MainMenuContainer/MainButtons/StartGameButton
 @onready var explore_3d_map_button: Button = $MainMenuContainer/MainButtons/Explore3DMapButton
+@onready var ethnicit_detection_button: Button = $MainMenuContainer/MainButtons/EthnicitDetectionButton
 @onready var topeng_nusantara_button: Button = $MainMenuContainer/MainButtons/TopengNusantaraButton
 @onready var load_game_button: Button = $MainMenuContainer/MainButtons/LoadGameButton
 @onready var how_to_play_button: Button = $MainMenuContainer/MainButtons/HowToPlayButton
@@ -43,6 +44,9 @@ extends Control
 @onready var how_to_play_panel: Control = $HowToPlayPanel
 @onready var about_us_panel: Control = $AboutUsPanel
 @onready var credits_panel: Control = $CreditsPanel
+@onready var how_to_play_back_button: Button = $HowToPlayPanel/HowToPlayContainer/HowToPlayBackButton
+@onready var about_us_back_button: Button = $AboutUsPanel/AboutUsContainer/AboutUsBackButton
+@onready var credits_back_button: Button = $CreditsPanel/CreditsContainer/CreditsBackButton
 
 # Audio
 @onready var button_sound: AudioStreamPlayer = $ButtonSound
@@ -53,6 +57,7 @@ var current_menu_level: String = "main"  # "main", "start_game", "how_to_play", 
 var current_button_index: int = 0
 var buttons: Array[Button] = []
 var submenu_buttons: Array[Button] = []
+var panel_buttons: Array[Button] = []  # For How to Play, About Us, Credits panels
 var navigation_enabled: bool = true
 var last_navigation_time: float = 0.0
 var navigation_cooldown: float = 0.2  # Prevent rapid navigation
@@ -110,6 +115,7 @@ func setup_menu_navigation():
 	# Main menu buttons (excluding hidden start_game_button)
 	buttons = [
 		explore_3d_map_button,
+		ethnicit_detection_button,
 		topeng_nusantara_button,
 		load_game_button,
 		how_to_play_button,
@@ -134,59 +140,94 @@ func setup_menu_navigation():
 
 func _input(event):
 	"""Handle keyboard and joystick input for menu navigation"""
+	# Check if viewport is still valid (prevent errors during scene transitions)
+	if not get_viewport():
+		return
+	
 	if not navigation_enabled:
 		return
 	
 	# Handle keyboard input
 	if event is InputEventKey and event.pressed:
+		var viewport = get_viewport()
+		if not viewport:
+			return
+			
 		match event.keycode:
 			KEY_UP:
 				navigate_up()
-				get_viewport().set_input_as_handled()
+				viewport.set_input_as_handled()
 			KEY_DOWN:
 				navigate_down()
-				get_viewport().set_input_as_handled()
+				viewport.set_input_as_handled()
 			KEY_LEFT:
 				navigate_left()
-				get_viewport().set_input_as_handled()
+				viewport.set_input_as_handled()
 			KEY_RIGHT:
 				navigate_right()
-				get_viewport().set_input_as_handled()
+				viewport.set_input_as_handled()
 			KEY_ENTER, KEY_SPACE:
 				activate_current_button()
-				get_viewport().set_input_as_handled()
+				viewport.set_input_as_handled()
 			KEY_ESCAPE:
 				handle_escape()
-				get_viewport().set_input_as_handled()
+				viewport.set_input_as_handled()
 	
 	# Handle joystick input
 	elif event is InputEventJoypadButton and event.pressed:
+		var viewport = get_viewport()
+		if not viewport:
+			return
+			
 		match event.button_index:
 			JOY_BUTTON_A:  # A button (Xbox style)
 				activate_current_button()
-				get_viewport().set_input_as_handled()
+				viewport.set_input_as_handled()
 			JOY_BUTTON_B:  # B button (Xbox style)
 				handle_escape()
-				get_viewport().set_input_as_handled()
+				viewport.set_input_as_handled()
 	
 	elif event is InputEventJoypadMotion:
 		# Handle analog stick movement
+		var viewport = get_viewport()
+		if not viewport:
+			return
+			
 		if abs(event.axis_value) > 0.5:  # Dead zone
 			match event.axis:
 				JOY_AXIS_LEFT_Y:
 					if event.axis_value < -0.5:  # Up
 						navigate_up()
-						get_viewport().set_input_as_handled()
+						viewport.set_input_as_handled()
 					elif event.axis_value > 0.5:  # Down
 						navigate_down()
-						get_viewport().set_input_as_handled()
+						viewport.set_input_as_handled()
 				JOY_AXIS_LEFT_X:
 					if event.axis_value < -0.5:  # Left
 						navigate_left()
-						get_viewport().set_input_as_handled()
+						viewport.set_input_as_handled()
 					elif event.axis_value > 0.5:  # Right
 						navigate_right()
-						get_viewport().set_input_as_handled()
+						viewport.set_input_as_handled()
+	
+	# Legacy keyboard shortcuts (for compatibility)
+	elif event.is_action_pressed("ui_accept"):
+		# Enter key - activate focused button (legacy support)
+		var viewport = get_viewport()
+		if viewport:
+			var focused = viewport.gui_get_focus_owner()
+			if focused and focused is Button:
+				focused.pressed.emit()
+	
+	elif event.is_action_pressed("ui_cancel"):
+		# Escape key - legacy navigation support
+		if start_game_submenu.visible:
+			# From region selection, go to 3D map
+			GameLogger.info("ESC pressed from region selection - navigating to 3D map")
+			show_3d_map_final()
+		elif how_to_play_panel.visible or about_us_panel.visible or credits_panel.visible:
+			# From other panels, go back to main menu
+			_on_back_to_main_pressed()
 
 func update_button_focus():
 	"""Update visual focus on current button"""
@@ -214,12 +255,14 @@ func get_current_button_array() -> Array[Button]:
 			return buttons
 		"start_game":
 			return submenu_buttons
+		"how_to_play", "about_us", "credits":
+			return panel_buttons
 		_:
 			return []
 
 func navigate_up():
 	"""Navigate to previous button"""
-	var current_time = Time.get_time_dict_from_system()["unix"]
+	var current_time = Time.get_unix_time_from_system()
 	if current_time - last_navigation_time < navigation_cooldown:
 		return
 	
@@ -233,7 +276,7 @@ func navigate_up():
 
 func navigate_down():
 	"""Navigate to next button"""
-	var current_time = Time.get_time_dict_from_system()["unix"]
+	var current_time = Time.get_unix_time_from_system()
 	if current_time - last_navigation_time < navigation_cooldown:
 		return
 	
@@ -286,6 +329,10 @@ func connect_signals():
 	#	start_game_button.pressed.connect(_on_start_game_pressed)
 	if not explore_3d_map_button.pressed.is_connected(_on_explore_3d_map_pressed):
 		explore_3d_map_button.pressed.connect(_on_explore_3d_map_pressed)
+	if not ethnicit_detection_button.pressed.is_connected(_on_ethnicity_detection_pressed):
+		ethnicit_detection_button.pressed.connect(_on_ethnicity_detection_pressed)
+	if not topeng_nusantara_button.pressed.is_connected(_on_topeng_nusantara_pressed):
+		topeng_nusantara_button.pressed.connect(_on_topeng_nusantara_pressed)
 	if not load_game_button.pressed.is_connected(_on_load_game_pressed):
 		load_game_button.pressed.connect(_on_load_game_pressed)
 	if not how_to_play_button.pressed.is_connected(_on_how_to_play_pressed):
@@ -346,6 +393,10 @@ func _on_credits_pressed():
 func _on_exit_game_pressed():
 	play_button_sound()
 	GameLogger.info("🔘 Exit Game button pressed - showing unified confirmation dialog")
+	
+	# Disable navigation when showing exit dialog
+	navigation_enabled = false
+	
 	UnifiedExitDialog.show_main_menu_exit_dialog()
 
 func _on_ethnicity_detection_pressed():
@@ -411,6 +462,9 @@ func show_load_confirmation():
 	GameLogger.info("✅ Load game dialog shown")
 
 func show_no_save_data_message():
+	# Disable navigation when dialog is shown
+	navigation_enabled = false
+	
 	var popup = AcceptDialog.new()
 	popup.dialog_text = "No save data found.\nStart a new game to create a checkpoint."
 	popup.title = "No Save Data"
@@ -425,6 +479,7 @@ func show_no_save_data_message():
 	
 	popup.confirmed.connect(_on_no_save_confirmed)
 	popup.custom_action.connect(_on_no_save_confirmed)
+	popup.tree_exited.connect(_on_dialog_closed)
 	
 	add_child(popup)
 	popup.popup_centered()
@@ -438,6 +493,11 @@ func _on_load_canceled():
 	# User chose No - close dialog and stay in main menu
 	GameLogger.info("✅ User chose NO on load dialog - staying in main menu")
 	# Dialog automatically closes, no action needed
+
+func _on_dialog_closed():
+	"""Re-enable navigation when dialog is closed"""
+	navigation_enabled = true
+	GameLogger.info("🎮 Navigation re-enabled after dialog closed")
 
 func _on_no_save_confirmed(_action: String):
 	# Ensure the dialog is freed before proceeding
@@ -495,6 +555,8 @@ func show_main_menu():
 	current_button_index = 0
 	update_button_focus()
 	
+	GameLogger.info("🎮 Switched to main menu navigation")
+	
 	# Set focus back to explore map button
 	explore_3d_map_button.grab_focus()
 
@@ -509,6 +571,8 @@ func show_start_game_submenu():
 	current_menu_level = "start_game"
 	current_button_index = 0
 	update_button_focus()
+	
+	GameLogger.info("🎮 Switched to start game submenu navigation")
 	
 	indonesia_barat_button.grab_focus()
 	
@@ -532,12 +596,21 @@ func show_how_to_play_panel():
 	
 	# Update navigation state
 	current_menu_level = "how_to_play"
+	panel_buttons.clear()
+	panel_buttons.append(how_to_play_back_button)
+	current_button_index = 0
+	update_button_focus()
+	
+	# Set focus to back button
+	how_to_play_back_button.grab_focus()
 	
 	# Play panel open sound
 	if audio_manager:
 		audio_manager.play_menu_audio("menu_open")
 	else:
 		GlobalSignals.on_play_menu_audio.emit("menu_open")
+	
+	GameLogger.info("🎮 Switched to How to Play panel navigation")
 
 func show_about_us_panel():
 	main_menu_container.visible = false
@@ -548,12 +621,21 @@ func show_about_us_panel():
 	
 	# Update navigation state
 	current_menu_level = "about_us"
+	panel_buttons.clear()
+	panel_buttons.append(about_us_back_button)
+	current_button_index = 0
+	update_button_focus()
+	
+	# Set focus to back button
+	about_us_back_button.grab_focus()
 	
 	# Play panel open sound
 	if audio_manager:
 		audio_manager.play_menu_audio("menu_open")
 	else:
 		GlobalSignals.on_play_menu_audio.emit("menu_open")
+	
+	GameLogger.info("🎮 Switched to About Us panel navigation")
 
 func show_credits_panel():
 	main_menu_container.visible = false
@@ -564,12 +646,21 @@ func show_credits_panel():
 	
 	# Update navigation state
 	current_menu_level = "credits"
+	panel_buttons.clear()
+	panel_buttons.append(credits_back_button)
+	current_button_index = 0
+	update_button_focus()
+	
+	# Set focus to back button
+	credits_back_button.grab_focus()
 	
 	# Play panel open sound
 	if audio_manager:
 		audio_manager.play_menu_audio("menu_open")
 	else:
 		GlobalSignals.on_play_menu_audio.emit("menu_open")
+	
+	GameLogger.info("🎮 Switched to Credits panel navigation")
 
 func show_3d_map():
 	"""Show the original 3D Indonesia map (for learning/reference)"""
@@ -874,20 +965,4 @@ func show_error_message(message: String):
 	add_child(popup)
 	popup.popup_centered()
 
-# Keyboard shortcuts for quick access
-func _input(event):
-	if event.is_action_pressed("ui_accept"):
-		# Enter key - activate focused button
-		var focused = get_viewport().gui_get_focus_owner()
-		if focused and focused is Button:
-			focused.pressed.emit()
-	
-	elif event.is_action_pressed("ui_cancel"):
-		# Escape key - navigate to 3D map from region selection, or back to main menu from other panels
-		if start_game_submenu.visible:
-			# From region selection, go to 3D map
-			GameLogger.info("ESC pressed from region selection - navigating to 3D map")
-			show_3d_map_final()
-		elif how_to_play_panel.visible or about_us_panel.visible or credits_panel.visible:
-			# From other panels, go back to main menu
-			_on_back_to_main_pressed()
+# Keyboard shortcuts are now handled in the main _input function above
