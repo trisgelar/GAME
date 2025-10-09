@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="RegionInfoPanelConfig" format=3]
+
+[resource]
+panel_width = 480.0
+panel_height = 200.0
+panel_margin_from_placeholder = 50.0
+panel_background_color = Color(0.149, 0.153, 0.125, 1)

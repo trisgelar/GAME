@@ -721,22 +721,23 @@ class MLWebcamServer:
                 self.send_frame_to_clients(frame_data)
                 last_frame_time = current_time
                 
-                # Debug: Print frame sending info (like Topeng server)
-                if self.frame_count % 60 == 0:  # Print every 60 frames (about every 4 seconds at 15fps)
-                    print(f"📤 Frame {self.frame_count}: {len(frame_data)//1024}KB → {len(self.clients)} clients")
-                    logger.info(f"📤 Frame {self.frame_count}: {len(frame_data)//1024}KB → {len(self.clients)} clients")
+                # Debug: Print frame sending info (like Topeng server) - commented out to reduce spam
+                # if self.frame_count % 60 == 0:  # Print every 60 frames (about every 4 seconds at 15fps)
+                #     print(f"📤 Frame {self.frame_count}: {len(frame_data)//1024}KB → {len(self.clients)} clients")
+                #     logger.info(f"📤 Frame {self.frame_count}: {len(frame_data)//1024}KB → {len(self.clients)} clients")
+                pass  # Placeholder to avoid empty if block
             else:
                 print("❌ Failed to encode frame as JPEG")
     
     def send_frame_to_clients(self, frame_data):
         debug_msg = f"🔍 DEBUG: send_frame_to_clients called with {len(frame_data) if frame_data else 0} bytes, {len(self.clients)} clients"
         # print(debug_msg)  # Commented out to reduce terminal spam - check logs instead
-        logger.info(debug_msg)  # Temporarily re-enabled to debug frame sending
+        # logger.info(debug_msg)  # Commented out to reduce log spam
         if not frame_data or len(self.clients) == 0:
             if len(self.clients) == 0:
                 no_clients_msg = "⚠️ No clients to send frame to"
                 # print(no_clients_msg)  # Commented out to reduce terminal spam - check logs instead
-                logger.info(no_clients_msg)  # Temporarily re-enabled to debug
+                # logger.info(no_clients_msg)  # Commented out to reduce log spam
             return
         
         self.sequence_number = (self.sequence_number + 1) % 65536
@@ -755,15 +756,15 @@ class MLWebcamServer:
                     header = struct.pack("!III", self.sequence_number, total_packets, packet_index)
                     udp_packet = header + frame_data[start_pos:end_pos]
                     
-                    # Debug: Log what we're sending
-                    if packet_index == 0:  # Only log first packet of each frame
-                        print(f"🔍 ML Server sending: seq={self.sequence_number}, total={total_packets}, idx={packet_index}, frame_size={frame_size}")
+                    # Debug: Log what we're sending - commented out to reduce spam
+                    # if packet_index == 0:  # Only log first packet of each frame
+                    #     print(f"🔍 ML Server sending: seq={self.sequence_number}, total={total_packets}, idx={packet_index}, frame_size={frame_size}")
                     
                     self.server_socket.sendto(udp_packet, client_addr)
                     
-                # Debug: Confirm frame sent
-                if self.sequence_number % 60 == 1:
-                    print(f"📤 Sent frame {self.sequence_number} to {client_addr}")
+                # Debug: Confirm frame sent - commented out to reduce spam
+                # if self.sequence_number % 60 == 1:
+                #     print(f"📤 Sent frame {self.sequence_number} to {client_addr}")
                 
                 # Frame sending debug moved to _broadcast_frames function
                     

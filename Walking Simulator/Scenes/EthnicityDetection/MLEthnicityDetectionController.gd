@@ -16,16 +16,18 @@ extends Control
 @onready var confidence_label = $MainContainer/ResultContainer/ConfidenceLabel
 @onready var skip_to_map_button = $MainContainer/ButtonContainer/SkipToMapButton
 
-# ML Model Selection UI
-@onready var model_selection_container = $MainContainer/ModelSelectionContainer
-@onready var model_dropdown = $MainContainer/ModelSelectionContainer/ModelDropdown
-@onready var model_info_label = $MainContainer/ModelSelectionContainer/ModelInfoLabel
+# ML Model Selection UI (optional - may not exist in scene)
+@onready var model_selection_container = get_node_or_null("MainContainer/ModelSelectionContainer")
+@onready var model_dropdown = get_node_or_null("MainContainer/ModelSelectionContainer/ModelDropdown")
+@onready var model_info_label = get_node_or_null("MainContainer/ModelSelectionContainer/ModelInfoLabel")
 
 # ML Webcam Manager
-var ml_webcam_manager: Node
+var ml_webcam_manager: Node  # For video streaming (WebcamManagerUDP)
+var ml_detection_manager: Node  # For ML detection (MLWebcamManager)
 
 var detection_timer: Timer
 var redirect_timer: Timer
+var fallback_timer: SceneTreeTimer
 var detection_progress: float = 0.0
 var is_detecting: bool = false
 var detected_ethnicity_result: String = ""
@@ -40,7 +42,8 @@ var current_fps: float = 0.0
 var ml_detection_active: bool = false
 var last_ml_result: Dictionary = {}
 var detection_attempts: int = 0
-var max_detection_attempts: int = 10
+var max_detection_attempts: int = 3  # Reduced from 10 to prevent spam
+var simulation_fallback_enabled: bool = false  # Prevent continuous simulation
 
 # Available ML models
 var available_models = {
@@ -105,20 +108,29 @@ func setup_ml_webcam_manager():
 	# Setup placeholder image dulu
 	setup_webcam_placeholder()
 	
-	# Load MLWebcamManager script
-	var ml_webcam_script = load("res://Scenes/EthnicityDetection/WebcamClient/MLWebcamManager.gd")
-	if ml_webcam_script == null:
-		print("❌ Error: Could not load MLWebcamManager.gd")
-		camera_status_label.text = "❌ ML Script tidak ditemukan"
+	# Use Clean Webcam Manager (based on Topeng but for ML server)
+	var webcam_script = load("res://Scenes/EthnicityDetection/WebcamClient/CleanWebcamManager.gd")
+	if webcam_script == null:
+		print("❌ Error: Could not load CleanWebcamManager.gd")
+		camera_status_label.text = "❌ Clean Webcam Script tidak ditemukan"
 		camera_status_label.modulate = Color(1, 0, 0, 0.9)
 		return
 	
-	print("Creating MLWebcamManager instance...")
-	ml_webcam_manager = ml_webcam_script.new()
+	print("Creating CleanWebcamManager instance (Camera 0, ML Server)...")
+	ml_webcam_manager = webcam_script.new()
 	add_child(ml_webcam_manager)
 	
-	# Connect signals dengan error handling
-	print("Connecting ML signals...")
+	# Load MLWebcamManager separately for detection only
+	var ml_script = load("res://Scenes/EthnicityDetection/WebcamClient/MLWebcamManager.gd")
+	if ml_script:
+		print("Creating MLWebcamManager instance for detection...")
+		var ml_manager = ml_script.new()
+		ml_manager.name = "MLDetectionManager"
+		add_child(ml_manager)
+		ml_detection_manager = ml_manager
+	
+	# Connect WebcamManagerUDP signals (for video streaming)
+	print("Connecting WebcamManagerUDP signals...")
 	if ml_webcam_manager.has_signal("frame_received"):
 		ml_webcam_manager.frame_received.connect(_on_webcam_frame_received)
 		print("✅ frame_received signal connected")
@@ -131,17 +143,24 @@ func setup_ml_webcam_manager():
 		ml_webcam_manager.error_message.connect(_on_webcam_error)
 		print("✅ error_message signal connected")
 	
-	if ml_webcam_manager.has_signal("detection_result_received"):
-		ml_webcam_manager.detection_result_received.connect(_on_ml_detection_result)
+	# Connect MLWebcamManager signals (for detection only)
+	if ml_detection_manager and ml_detection_manager.has_signal("detection_result_received"):
+		ml_detection_manager.detection_result_received.connect(_on_ml_detection_result)
 		print("✅ detection_result_received signal connected")
 		
 	# Update status
-	camera_status_label.text = "🔗 Menghubungkan ke ML webcam server (port 8888)..."
+	camera_status_label.text = "🔗 Menghubungkan ke ML server (Camera 0) untuk video..."
 	camera_status_label.modulate = Color(1, 1, 0, 0.8)
 	
 	# Coba koneksi ke ML webcam server
 	print("Attempting ML connection to webcam server...")
 	ml_webcam_manager.connect_to_webcam_server()
+	
+	# Also connect the ML detection manager
+	if ml_detection_manager:
+		print("Connecting ML detection manager to server...")
+		ml_detection_manager.connect_to_webcam_server()
+	
 	print("MLWebcamManager setup complete")
 
 func setup_model_selection():
@@ -249,7 +268,9 @@ func _on_webcam_error(message: String):
 
 func _on_ml_detection_result(ethnicity: String, confidence: float, model: String):
 	"""Handle ML detection result"""
-	print("🧠 ML Detection: %s (%.2f%%) using %s" % [ethnicity, confidence * 100, model])
+	# Reduce spam - only print every 5th result or when actively detecting
+	if detection_attempts % 5 == 0 or is_detecting:
+		print("🧠 ML Detection: %s (%.2f%%) using %s" % [ethnicity, confidence * 100, model])
 	
 	last_ml_result = {
 		"ethnicity": ethnicity,
@@ -258,17 +279,18 @@ func _on_ml_detection_result(ethnicity: String, confidence: float, model: String
 		"timestamp": Time.get_ticks_msec() / 1000.0
 	}
 	
-	# Update confidence label
+	# Update confidence label with model name
 	if confidence_label:
-		confidence_label.text = "Confidence: %.1f%%" % (confidence * 100)
+		confidence_label.text = "Confidence: %.1f%% (ML Model: %s)" % [confidence * 100, model]
 	
 	# If we're actively detecting and got a good result, complete detection
 	if is_detecting and confidence > 0.6:  # Minimum 60% confidence
 		detection_complete_ml(ethnicity, confidence)
 	elif is_detecting:
 		detection_attempts += 1
-		if detection_attempts >= max_detection_attempts:
-			# Fallback to simulation if ML fails
+		if detection_attempts >= max_detection_attempts and not simulation_fallback_enabled:
+			# Fallback to simulation if ML fails (only once)
+			simulation_fallback_enabled = true
 			detection_complete_simulation()
 
 func setup_loading_spinner():
@@ -322,6 +344,7 @@ func reset_ui():
 	detection_progress = 0.0
 	is_detecting = false
 	detection_attempts = 0
+	simulation_fallback_enabled = false  # Reset simulation fallback flag
 	result_container.visible = false
 	status_label.text = "Mencari wajah..."
 	start_button.text = "Mulai Deteksi ML"
@@ -349,6 +372,13 @@ func start_ml_detection():
 	status_label.text = "🧠 Mendeteksi dengan ML..."
 	face_frame.border_color = Color(1, 1, 0, 0.8)
 	
+	# Send detection request to ML server only when button is clicked
+	if ml_detection_manager and ml_detection_manager.has_method("send_detection_request"):
+		print("🔍 Sending manual detection request to ML server...")
+		ml_detection_manager.send_detection_request()
+	else:
+		print("⚠️ ML detection manager not available for detection request")
+	
 	# Start fallback timer in case ML fails
 	detection_timer.start()
 	
@@ -369,14 +399,28 @@ func _on_detection_progress():
 	detection_progress += randf_range(2.0, 4.0)
 	progress_bar.value = min(detection_progress, 100.0)
 	
-	# If ML hasn't provided result and we've been trying too long, use simulation
-	if detection_progress >= 100.0 and detection_attempts >= max_detection_attempts:
+	# If ML hasn't provided result and we've been trying too long, use simulation (only once)
+	# Wait longer for ML results - only fallback after 100% progress is reached
+	if detection_progress >= 100.0 and detection_attempts >= max_detection_attempts and not simulation_fallback_enabled:
+		simulation_fallback_enabled = true  # Prevent multiple simulation fallbacks
+		# Start a delay timer to give ML server time to respond
+		fallback_timer = get_tree().create_timer(3.0)
+		fallback_timer.timeout.connect(_on_fallback_timeout)
+
+func _on_fallback_timeout():
+	"""Called when fallback timer expires - use simulation if still detecting"""
+	if is_detecting:
+		print("⏰ Fallback timeout reached, using simulation detection")
 		detection_complete_simulation()
 
 func detection_complete_ml(ethnicity: String, confidence: float):
 	"""Complete detection with ML result"""
 	detection_timer.stop()
 	is_detecting = false
+	
+	# Cancel any pending fallback timer since we got a real ML result
+	if simulation_fallback_enabled:
+		simulation_fallback_enabled = false
 	
 	detected_ethnicity_result = ethnicity
 	detected_confidence = confidence
@@ -394,9 +438,9 @@ func detection_complete_ml(ethnicity: String, confidence: float):
 	if skip_to_map_button:
 		skip_to_map_button.visible = true
 	
-	# Update confidence label
+	# Update confidence label with model name
 	if confidence_label:
-		confidence_label.text = "Confidence: %.1f%%" % (confidence * 100)
+		confidence_label.text = "Confidence: %.1f%% (ML Model: %s)" % [confidence * 100, current_ml_model]
 	
 	# Mulai countdown redirect (30 detik)
 	redirect_timer.start()
@@ -430,9 +474,9 @@ func detection_complete_simulation():
 	if skip_to_map_button:
 		skip_to_map_button.visible = true
 	
-	# Update confidence label
+	# Update confidence label with simulation indicator
 	if confidence_label:
-		confidence_label.text = "Confidence: %.1f%%" % (detected_confidence * 100)
+		confidence_label.text = "Confidence: %.1f%% (ML Model: simulation)" % (detected_confidence * 100)
 	
 	# Mulai countdown redirect (30 detik)
 	redirect_timer.start()

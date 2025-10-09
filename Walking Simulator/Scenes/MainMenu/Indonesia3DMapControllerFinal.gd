@@ -8,6 +8,7 @@ extends Node3D
 @export var simple_terrain_applier: SimpleTerrainApplier
 @export var artistic_enhancer: ArtisticColorEnhancer
 @export var map_config: Indonesia3DMapConfig
+@export var ui_config: RegionInfoPanelConfig
 
 # Camera control variables (loaded from config)
 var camera_zoom_speed: float = 3.0  # Slower zoom for better control
@@ -79,9 +80,6 @@ func _ready():
 	_create_region_placeholders()
 	GameLogger.info("🚀 Final Indonesia3D Map initialization completed!")
 
-func _process(delta):
-	"""Update region focus detection for joystick interaction"""
-	_update_region_focus()
 
 func _load_config():
 	"""Load configuration with coordinates and settings"""
@@ -90,6 +88,12 @@ func _load_config():
 	# Load or create config
 	if not map_config:
 		map_config = Indonesia3DMapConfig.load_from_file()
+	
+	# Load UI configuration
+	if not ui_config:
+		ui_config = RegionInfoPanelConfig.load_from_file()
+		GameLogger.info("🎨 Loaded UI configuration: " + str(ui_config.panel_width) + "x" + str(ui_config.panel_height))
+		GameLogger.info("🎨 Panel width: " + str(ui_config.panel_width) + " | Panel height: " + str(ui_config.panel_height))
 	
 	# Load region data from config
 	region_data = map_config.get_region_data()
@@ -297,7 +301,7 @@ func _setup_artistic_enhancement():
 	GameLogger.info("✅ Artistic enhancement setup completed")
 
 func _input(event):
-	"""Handle input for camera control and interaction"""
+	"""Handle input for camera control, interaction, and navigation"""
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			# Check for placeholder clicks to show region info
@@ -365,15 +369,57 @@ func _input(event):
 					_zoom_camera(-camera_zoom_speed)
 				KEY_KP_SUBTRACT, KEY_MINUS:
 					_zoom_camera(camera_zoom_speed)
+				# Navigation keys
+				KEY_UP:
+					navigate_up()
+				KEY_DOWN:
+					navigate_down()
+				KEY_LEFT:
+					navigate_left()
+				KEY_RIGHT:
+					navigate_right()
+				KEY_ENTER, KEY_SPACE:
+					activate_current_button()
+	
+	# Handle joystick input for navigation
+	elif event is InputEventJoypadButton and event.pressed:
+		match event.button_index:
+			JOY_BUTTON_A:  # A button (Xbox style)
+				if focused_region_id != "":
+					# Interact with focused region
+					_interact_with_focused_region()
+				else:
+					# Fall back to button activation
+					activate_current_button()
+			JOY_BUTTON_B:  # B button (Xbox style)
+				handle_escape()
+	
+	elif event is InputEventJoypadMotion:
+		# Handle analog stick movement
+		if abs(event.axis_value) > 0.5:  # Dead zone
+			match event.axis:
+				JOY_AXIS_LEFT_Y:
+					if event.axis_value < -0.5:  # Up
+						navigate_up()
+					elif event.axis_value > 0.5:  # Down
+						navigate_down()
+				JOY_AXIS_LEFT_X:
+					if event.axis_value < -0.5:  # Left
+						navigate_left()
+					elif event.axis_value > 0.5:  # Right
+						navigate_right()
 
 func _process(delta):
-	"""Update camera position smoothly"""
+	"""Update camera position smoothly and region focus detection for joystick interaction"""
 	if is_camera_moving:
 		map_camera.position = map_camera.position.lerp(target_camera_position, camera_move_speed * delta)
 		map_camera.rotation_degrees = map_camera.rotation_degrees.lerp(target_camera_rotation, camera_move_speed * delta)
 		
 		if map_camera.position.distance_to(target_camera_position) < 1.0:
 			is_camera_moving = false
+	
+	# Update region focus detection for joystick interaction
+	_update_region_focus()
 
 func _zoom_camera(zoom_delta: float):
 	"""Smooth zoom camera in/out with better control"""
@@ -410,16 +456,21 @@ func _show_region_info(region_id: String):
 				var screen_pos = map_camera.unproject_position(placeholder_node.global_position)
 				
 				# Position panel near placeholder but keep it on screen
-				var panel_width = 300.0  # Panel width
-				var panel_height = 150.0  # Panel height
+				var panel_width = ui_config.panel_width
+				var panel_height = ui_config.panel_height
 				var screen_size = get_viewport().get_visible_rect().size
 				
+				# Debug logging
+				GameLogger.info("🎨 Using panel size: " + str(panel_width) + "x" + str(panel_height))
+				
 				# Offset to the right of placeholder, but clamp to screen bounds
-				var target_x = clamp(screen_pos.x + 50, 0, screen_size.x - panel_width)
+				var target_x = clamp(screen_pos.x + ui_config.panel_margin_from_placeholder, 0, screen_size.x - panel_width)
 				var target_y = clamp(screen_pos.y - panel_height/2, 0, screen_size.y - panel_height)
 				
 				region_info_panel.position = Vector2(target_x, target_y)
 				region_info_panel.size = Vector2(panel_width, panel_height)
+				
+				GameLogger.info("🎨 Set panel size to: " + str(region_info_panel.size))
 			
 			region_info_panel.visible = true
 			
@@ -667,84 +718,6 @@ func update_navigation_buttons():
 		current_button_index = 0
 	
 	update_button_focus()
-
-func _input(event):
-	"""Handle keyboard and joystick input for menu navigation"""
-	# Check if viewport is still valid (prevent errors during scene transitions)
-	if not get_viewport():
-		return
-	
-	if not navigation_enabled:
-		return
-	
-	# Handle keyboard input
-	if event is InputEventKey and event.pressed:
-		var viewport = get_viewport()
-		if not viewport:
-			return
-			
-		match event.keycode:
-			KEY_UP:
-				navigate_up()
-				viewport.set_input_as_handled()
-			KEY_DOWN:
-				navigate_down()
-				viewport.set_input_as_handled()
-			KEY_LEFT:
-				navigate_left()
-				viewport.set_input_as_handled()
-			KEY_RIGHT:
-				navigate_right()
-				viewport.set_input_as_handled()
-			KEY_ENTER, KEY_SPACE:
-				activate_current_button()
-				viewport.set_input_as_handled()
-			KEY_ESCAPE:
-				handle_escape()
-				viewport.set_input_as_handled()
-	
-	# Handle joystick input
-	elif event is InputEventJoypadButton and event.pressed:
-		var viewport = get_viewport()
-		if not viewport:
-			return
-			
-		match event.button_index:
-			JOY_BUTTON_A:  # A button (Xbox style)
-				if focused_region_id != "":
-					# Interact with focused region
-					_interact_with_focused_region()
-					viewport.set_input_as_handled()
-				else:
-					# Fall back to button activation
-					activate_current_button()
-					viewport.set_input_as_handled()
-			JOY_BUTTON_B:  # B button (Xbox style)
-				handle_escape()
-				viewport.set_input_as_handled()
-	
-	elif event is InputEventJoypadMotion:
-		# Handle analog stick movement
-		var viewport = get_viewport()
-		if not viewport:
-			return
-			
-		if abs(event.axis_value) > 0.5:  # Dead zone
-			match event.axis:
-				JOY_AXIS_LEFT_Y:
-					if event.axis_value < -0.5:  # Up
-						navigate_up()
-						viewport.set_input_as_handled()
-					elif event.axis_value > 0.5:  # Down
-						navigate_down()
-						viewport.set_input_as_handled()
-				JOY_AXIS_LEFT_X:
-					if event.axis_value < -0.5:  # Left
-						navigate_left()
-						viewport.set_input_as_handled()
-					elif event.axis_value > 0.5:  # Right
-						navigate_right()
-						viewport.set_input_as_handled()
 
 func navigate_up():
 	"""Navigate to previous button"""

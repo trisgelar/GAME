@@ -5,11 +5,11 @@
 [resource]
 script = ExtResource("1_script")
 master_volume = 1.0
-ambient_volume = 0.3
+ambient_volume = 0.7
 music_volume = 0.5
-effects_volume = 1.0
+effects_volume = 0.4
 voice_volume = 1.0
-footsteps_volume = 1.0
+footsteps_volume = 0.4
 menu_volume = 0.6
 ui_volume = 0.8
 ambient_audio = {

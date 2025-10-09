@@ -84,10 +84,10 @@ func connect_to_webcam_server():
 		set_process(true)
 		_reset_stats()
 		
-		# Start detection requests
-		if detection_enabled:
-			detection_request_timer.start()
-			_request_detection()
+		# Don't automatically start detection requests - only when manually triggered
+		# if detection_enabled:
+		#	detection_request_timer.start()
+		#	_request_detection()
 	else:
 		_emit_error("Connection timeout")
 		udp_client.close()
@@ -174,7 +174,9 @@ func _handle_detection_result(message: String):
 		var confidence = result_data.get("confidence", 0.0)
 		var model = result_data.get("model", "unknown")
 		
-		print("🧠 ML Detection Result: %s (%.2f%%) using %s" % [ethnicity, confidence * 100, model])
+		# Reduce spam - only print occasionally
+		if frame_count % 10 == 0:  # Only print every 10th frame
+			print("🧠 ML Detection Result: %s (%.2f%%) using %s" % [ethnicity, confidence * 100, model])
 		detection_result_received.emit(ethnicity, confidence, model)
 	else:
 		print("❌ Failed to parse detection result: " + json_str)
@@ -201,6 +203,21 @@ func _request_detection():
 	
 	if send_result != OK:
 		print("❌ Failed to send detection request")
+
+func send_detection_request():
+	"""Manually send detection request (public method)"""
+	if not is_connected:
+		print("⚠️ Not connected to server, cannot send detection request")
+		return
+	
+	print("📤 Sending manual detection request to ML server...")
+	var request_message = "DETECTION_REQUEST".to_utf8_buffer()
+	var send_result = udp_client.put_packet(request_message)
+	
+	if send_result != OK:
+		print("❌ Failed to send manual detection request")
+	else:
+		print("✅ Manual detection request sent successfully")
 
 func select_model(model_name: String):
 	"""Select ML model for detection"""
@@ -314,6 +331,7 @@ func set_detection_enabled(enabled: bool):
 func _emit_error(message: String):
 	print("MLWebcamManager Error: " + message)
 	error_message.emit(message)
+
 
 func _notification(what):
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_PREDELETE:
