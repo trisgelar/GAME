@@ -31,6 +31,9 @@ import time
 import math
 import queue
 import traceback
+import logging
+from datetime import datetime
+from pathlib import Path
 
 # Try to import the FilterEngine (filter_ref.py). If missing, continue without filter.
 try:
@@ -38,6 +41,53 @@ try:
 except Exception as e:
     FilterEngine = None
     print("⚠️ filter_ref.FilterEngine not available:", e)
+
+# Setup logging
+def setup_logging():
+    """Setup logging for Topeng server"""
+    # Create logs directory if it doesn't exist
+    logs_dir = Path(__file__).parent / "logs"
+    logs_dir.mkdir(exist_ok=True)
+    
+    # Create timestamped log filename
+    timestamp = datetime.now().strftime("%Y%m%d")
+    log_file = logs_dir / f"topeng_server_{timestamp}.log"
+    error_log_file = logs_dir / f"topeng_server_errors_{timestamp}.log"
+    
+    # Setup main logger
+    logger = logging.getLogger("TopengServer")
+    logger.setLevel(logging.INFO)
+    
+    # Clear existing handlers
+    logger.handlers.clear()
+    
+    # File handler for general logs
+    file_handler = logging.FileHandler(log_file, encoding='utf-8')
+    file_handler.setLevel(logging.INFO)
+    
+    # File handler for errors only
+    error_handler = logging.FileHandler(error_log_file, encoding='utf-8')
+    error_handler.setLevel(logging.ERROR)
+    
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    
+    # Formatter
+    formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    file_handler.setFormatter(formatter)
+    error_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+    
+    # Add handlers
+    logger.addHandler(file_handler)
+    logger.addHandler(error_handler)
+    logger.addHandler(console_handler)
+    
+    return logger
+
+# Initialize logger
+logger = setup_logging()
 
 
 class UDPWebcamServer:
@@ -124,7 +174,9 @@ class UDPWebcamServer:
                 print(f"✅ Camera ready: {self.frame_width}x{self.frame_height} @ {self.target_fps}FPS")
                 return True
 
-        print("❌ Camera initialization failed")
+        error_msg = f"Camera initialization failed for camera ID {self.camera_id}"
+        print(f"❌ {error_msg}")
+        logger.error(error_msg)
         return False
 
     def start_server(self):
@@ -205,8 +257,11 @@ class UDPWebcamServer:
                             print("🎥 First client connected - initializing camera...")
                             if self.initialize_camera():
                                 print("✅ Camera initialized successfully")
+                                logger.info("Camera initialized successfully on first client connection")
                             else:
-                                print("❌ Failed to initialize camera")
+                                error_msg = "Failed to initialize camera on first client connection"
+                                print(f"❌ {error_msg}")
+                                logger.error(error_msg)
                     # ack
                     try:
                         self.server_socket.sendto("REGISTERED".encode('utf-8'), addr)
@@ -239,10 +294,15 @@ class UDPWebcamServer:
                         self.camera = cv2.VideoCapture(self.camera_id)
                         if self.camera.isOpened():
                             print(f"✅ Camera {self.camera_id} reinitialized")
+                            logger.info(f"Camera {self.camera_id} reinitialized successfully")
                         else:
-                            print(f"❌ Failed to reinitialize camera {self.camera_id}")
+                            error_msg = f"Failed to reinitialize camera {self.camera_id}"
+                            print(f"❌ {error_msg}")
+                            logger.error(error_msg)
                     except Exception as e:
-                        print(f"⚠️ Camera release error: {e}")
+                        error_msg = f"Camera release error: {e}"
+                        print(f"⚠️ {error_msg}")
+                        logger.error(error_msg)
 
                 # SET_MASK commands: queue for broadcast thread to execute
                 elif message.startswith("SET_MASK "):
@@ -296,10 +356,37 @@ class UDPWebcamServer:
 
             except socket.timeout:
                 continue
+            except ConnectionResetError as e:
+                if self.running:
+                    error_msg = f"Connection reset by client: {e}"
+                    print(f"⚠️ {error_msg}")
+                    logger.warning(error_msg)
+                    # Don't print full traceback for connection resets - they're normal
+                continue
+            except ConnectionAbortedError as e:
+                if self.running:
+                    error_msg = f"Connection aborted by client: {e}"
+                    print(f"⚠️ {error_msg}")
+                    logger.warning(error_msg)
+                continue
+            except OSError as e:
+                if self.running:
+                    if e.errno == 10054:  # WinError 10054 - Connection forcibly closed
+                        error_msg = f"Client connection forcibly closed: {e}"
+                        print(f"⚠️ {error_msg}")
+                        logger.warning(error_msg)
+                    else:
+                        error_msg = f"Network error: {e}"
+                        print(f"⚠️ {error_msg}")
+                        logger.error(error_msg)
+                        logger.error(traceback.format_exc())
+                continue
             except Exception as e:
                 if self.running:
-                    print(f"⚠️ Client listener error: {e}")
-                    traceback.print_exc()
+                    error_msg = f"Unexpected client listener error: {e}"
+                    print(f"⚠️ {error_msg}")
+                    logger.error(error_msg)
+                    logger.error(traceback.format_exc())
 
     def _handle_command_now(self, cmd: str, arg: str, addr):
         """
