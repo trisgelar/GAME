@@ -25,6 +25,7 @@ GameSceneManager="*res://Systems/Core/GameSceneManager.gd"
 DebugConfig="*res://Systems/Core/DebugConfig.gd"
 CookingGameIntegration="*res://Systems/Core/CookingGameIntegration.gd"
 ForceLoadCulturalItem="*res://Systems/Core/ForceLoadCulturalItem.gd"
+PapuaNPCHelper="*res://Systems/NPCs/PapuaNPCHelper.gd"
 
 [display]
 
