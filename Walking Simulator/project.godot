@@ -24,6 +24,7 @@ GameLogger="*res://Systems/Core/GameLogger.gd"
 GameSceneManager="*res://Systems/Core/GameSceneManager.gd"
 DebugConfig="*res://Systems/Core/DebugConfig.gd"
 CookingGameIntegration="*res://Systems/Core/CookingGameIntegration.gd"
+ForceLoadCulturalItem="*res://Systems/Core/ForceLoadCulturalItem.gd"
 
 [display]
 

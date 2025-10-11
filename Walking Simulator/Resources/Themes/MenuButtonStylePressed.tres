@@ -1,13 +1,15 @@
-[gd_resource type="StyleBoxTexture" load_steps=2 format=3]
+[gd_resource type="StyleBoxFlat" load_steps=2 format=3]
 
-[ext_resource type="Texture2D" uid="uid://7wsfprtu4f1r" path="res://Assets/UI/Exit/standardbut_p.png" id="1"]
+[sub_resource type="Gradient" id="Gradient_1"]
+colors = PackedColorArray(0.2, 0.3, 0.5, 1, 0.1, 0.2, 0.4, 1)
 
 [resource]
-texture = ExtResource("1")
-texture_margin_left = 8.0
-texture_margin_top = 8.0
-texture_margin_right = 8.0
-texture_margin_bottom = 8.0
+bg_color = Color(0.15, 0.25, 0.45, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.05, 0.15, 0.35, 1)
 content_margin_left = 16.0
 content_margin_top = 12.0
 content_margin_right = 16.0
