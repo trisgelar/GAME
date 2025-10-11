@@ -18,7 +18,16 @@ var option_buttons: Array[Button] = []
 
 # Input debouncing to prevent rapid selection
 var last_input_time: float = 0.0
-var input_debounce_delay: float = 0.3  # 300ms delay between inputs
+var input_debounce_delay: float = 0.5  # 500ms delay between inputs (increased)
+
+# Dialogue update protection
+var is_updating_dialogue: bool = false
+var dialogue_update_queue: Array = []
+
+# Rapid selection protection to prevent memory corruption
+var last_selected_option: int = -1
+var rapid_selection_count: int = 0
+var max_rapid_selections: int = 2  # Allow max 2 rapid selections before blocking
 
 func _on_component_ready():
 	# Hide dialogue panel initially
@@ -34,11 +43,21 @@ func _on_component_ready():
 	
 	# Set mouse filter to ignore when hidden
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	
+	# Ensure this component can receive input events
+	set_process_input(true)
+	set_process_unhandled_input(true)
+	
+	GameLogger.debug("DialogueUI: Component ready and input processing enabled")
 
 func _on_component_input(event):
 	# Only process input when the dialogue UI is visible
 	if not visible or not dialogue_panel.visible:
 		return
+	
+	# Debug: Log all input events to see what's being received
+	if has_node("/root/DebugConfig") and get_node("/root/DebugConfig").enable_input_debug:
+		GameLogger.debug("DialogueUI input received: " + str(event))
 	
 	# Check input debouncing
 	var current_time = Time.get_time_dict_from_system()
@@ -47,15 +66,17 @@ func _on_component_input(event):
 		return  # Ignore input if too soon after last input
 		
 	if has_node("/root/DebugConfig") and get_node("/root/DebugConfig").enable_input_debug:
-		GameLogger.debug("DialogueUI input received")
+		GameLogger.debug("DialogueUI processing input: " + str(event))
 
 	var handled := false
 	
 	# Handle navigation controls (no debouncing needed for navigation)
 	if event.is_action_pressed("dialogue_up"):
+		GameLogger.debug("DialogueUI: UP action pressed")
 		navigate_up()
 		handled = true
 	elif event.is_action_pressed("dialogue_down"):
+		GameLogger.debug("DialogueUI: DOWN action pressed")
 		navigate_down()
 		handled = true
 	elif event.is_action_pressed("dialogue_select"):
@@ -92,6 +113,22 @@ func _on_component_input(event):
 		safe_set_input_as_handled()
 
 func select_dialogue_option(option_index: int):
+	# Prevent rapid selection that could cause corruption
+	if is_updating_dialogue:
+		GameLogger.debug("DialogueUI: Update in progress, ignoring selection")
+		return
+	
+	# Check for rapid repeated selection (memory corruption prevention)
+	if option_index == last_selected_option:
+		rapid_selection_count += 1
+		if rapid_selection_count > max_rapid_selections:
+			GameLogger.warning("DialogueUI: Blocking rapid repeated selection to prevent memory corruption")
+			return
+	else:
+		# Reset counter for different option
+		rapid_selection_count = 0
+		last_selected_option = option_index
+	
 	if option_index >= 0 and option_index < dialogue_options.size():
 		var option = dialogue_options[option_index]
 		GameLogger.debug("Selecting dialogue option: " + str(option_index) + " - " + str(option.get("text", "")))
@@ -195,12 +232,20 @@ func show_dialogue_panel():
 	dialogue_panel.visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	
+	# Grab focus to ensure input events are received
+	grab_focus()
+	
+	# Reset corruption protection state for new dialogue
+	reset_corruption_protection()
+	
 	# Set NPC name
 	if current_npc:
 		npc_label.text = current_npc.npc_name
 	
 	# Add keyboard controls indicator
 	add_keyboard_controls_indicator()
+	
+	GameLogger.debug("DialogueUI: Panel shown and focus grabbed")
 
 func add_keyboard_controls_indicator():
 	# Create or update keyboard controls label
@@ -208,7 +253,7 @@ func add_keyboard_controls_indicator():
 	if not controls_label:
 		controls_label = Label.new()
 		controls_label.name = "KeyboardControls"
-		controls_label.text = "Controls: [↑↓] Navigate, [Space] Select, [1-4] Direct, [Enter] Continue, [Esc] Cancel"
+		controls_label.text = "Controls: [↑↓] Navigate, [Space/A] Select, [1-4/A-B-X-Y] Direct, [Enter] Continue, [Esc] Cancel"
 		controls_label.add_theme_color_override("font_color", Color.YELLOW)
 		controls_label.add_theme_font_size_override("font_size", 12)
 		dialogue_panel.add_child(controls_label)
@@ -234,11 +279,52 @@ func display_dialogue(dialogue: Dictionary):
 		hide_dialogue()
 		return
 	
-	# Set dialogue text
-	dialogue_label.text = dialogue.get("message", "")
+	# Prevent rapid updates that could cause text corruption
+	if is_updating_dialogue:
+		GameLogger.debug("DialogueUI: Update in progress, queuing dialogue")
+		dialogue_update_queue.append(dialogue)
+		return
 	
-	# Clear existing options
+	is_updating_dialogue = true
+	
+	# Safely get message text with validation
+	var message_text = dialogue.get("message", "")
+	if message_text == null or not message_text is String:
+		message_text = ""
+		GameLogger.warning("DialogueUI: Invalid message text detected, using empty string")
+	
+	# Additional text validation to prevent corruption
+	var clean_text = str(message_text)
+	# Clean and validate text
+	clean_text = clean_text.strip_edges()      # Remove leading/trailing whitespace
+	
+	# Validate Unicode to prevent corruption (400001 error prevention)
+	if clean_text.length() > 0:
+		var valid_chars = ""
+		for i in range(clean_text.length()):
+			var char_code = clean_text.unicode_at(i)
+			# Only allow valid Unicode range (0x0 to 0x10FFFF)
+			if char_code >= 0 and char_code <= 0x10FFFF:
+				valid_chars += clean_text[i]
+			else:
+				GameLogger.warning("DialogueUI: Invalid Unicode codepoint detected: " + str(char_code) + " - removing")
+		clean_text = valid_chars
+	
+	# Validate text length to prevent extremely long corruptions
+	if clean_text.length() > 10000:  # Sanity check for text length
+		GameLogger.warning("DialogueUI: Text too long (" + str(clean_text.length()) + " chars), truncating")
+		clean_text = clean_text.substr(0, 1000) + "..."
+	
+	# Set dialogue text with protection
+	dialogue_label.text = clean_text
+	GameLogger.debug("DialogueUI: Displaying dialogue text: " + str(clean_text.length()) + " characters")
+	
+	# Clear existing options and reset UI state
 	clear_options()
+	
+	# Reset dialogue label to prevent text corruption
+	dialogue_label.text = ""
+	call_deferred("set_dialogue_text", clean_text)
 	
 	# Store dialogue options for keyboard access
 	dialogue_options = dialogue.get("options", [])
@@ -247,6 +333,28 @@ func display_dialogue(dialogue: Dictionary):
 	for i in range(dialogue_options.size()):
 		var option = dialogue_options[i]
 		add_dialogue_option(option, i + 1)  # Pass option number (1, 2, 3, 4)
+	
+	# Mark update as complete
+	is_updating_dialogue = false
+	
+	# Process any queued updates
+	if dialogue_update_queue.size() > 0:
+		var next_dialogue = dialogue_update_queue.pop_front()
+		call_deferred("display_dialogue", next_dialogue)
+
+func set_dialogue_text(text: String):
+	"""Safely set dialogue text to prevent corruption"""
+	if dialogue_label and is_instance_valid(dialogue_label):
+		dialogue_label.text = str(text)
+		GameLogger.debug("DialogueUI: Text set safely: " + str(text.length()) + " characters")
+
+func reset_corruption_protection():
+	"""Reset all corruption protection state for new dialogue"""
+	last_selected_option = -1
+	rapid_selection_count = 0
+	is_updating_dialogue = false
+	dialogue_update_queue.clear()
+	GameLogger.debug("DialogueUI: Corruption protection state reset")
 
 func clear_options():
 	# Remove all option buttons except the close button
@@ -283,6 +391,11 @@ func add_dialogue_option(option: Dictionary, option_number: int = 0):
 		update_option_highlight()
 
 func _on_option_selected(option: Dictionary):
+	# Prevent rapid option selection that could cause corruption
+	if is_updating_dialogue:
+		GameLogger.debug("DialogueUI: Update in progress, ignoring option selection")
+		return
+	
 	var consequence = option.get("consequence", "")
 	var next_dialogue = option.get("next_dialogue", "")
 	
@@ -305,7 +418,8 @@ func _on_option_selected(option: Dictionary):
 	if next_dialogue != "":
 		GameLogger.debug("Loading next dialogue: " + next_dialogue)
 		current_dialogue_id = next_dialogue
-		load_and_display_dialogue()
+		# Use call_deferred to prevent rapid updates
+		call_deferred("load_and_display_dialogue")
 	else:
 		GameLogger.debug("No next dialogue - hiding dialogue")
 		hide_dialogue()
