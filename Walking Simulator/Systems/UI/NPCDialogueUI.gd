@@ -1,11 +1,16 @@
 class_name NPCDialogueUI
 extends BaseUIComponent
 
-@onready var dialogue_panel: Panel = $DialoguePanel
-@onready var npc_label: Label = $DialoguePanel/VBoxContainer/NPCLabel
-@onready var dialogue_label: Label = $DialoguePanel/VBoxContainer/DialogueLabel
-@onready var options_container: VBoxContainer = $DialoguePanel/VBoxContainer/OptionsContainer
-@onready var close_button: Button = $DialoguePanel/VBoxContainer/CloseButton
+# UI elements will be created programmatically
+var dialogue_panel: Panel
+var npc_label: Label
+var dialogue_label: Label
+var options_container: VBoxContainer
+var close_button: Button
+
+# Audio playback for dialogue
+var audio_player: AudioStreamPlayer
+var current_audio_stream: AudioStream
 
 var current_npc: CulturalNPC
 var current_dialogue: Dictionary
@@ -30,11 +35,16 @@ var rapid_selection_count: int = 0
 var max_rapid_selections: int = 2  # Allow max 2 rapid selections before blocking
 
 func _on_component_ready():
+	# Create UI elements if they don't exist
+	create_dialogue_ui_if_needed()
+	
 	# Hide dialogue panel initially
-	dialogue_panel.visible = false
+	if dialogue_panel:
+		dialogue_panel.visible = false
 	
 	# Connect signals
-	close_button.pressed.connect(_on_close_button_pressed)
+	if close_button:
+		close_button.pressed.connect(_on_close_button_pressed)
 	GlobalSignals.on_npc_interaction.connect(_on_npc_interaction)
 	
 	# Connect to EventBus (autoload singleton)
@@ -48,7 +58,79 @@ func _on_component_ready():
 	set_process_input(true)
 	set_process_unhandled_input(true)
 	
+	# Initialize audio player
+	setup_audio_player()
+	
 	GameLogger.debug("DialogueUI: Component ready and input processing enabled")
+
+func create_dialogue_ui_if_needed():
+	"""Create the dialogue UI elements if they don't exist"""
+	# Check if dialogue_panel already exists
+	if dialogue_panel:
+		return
+	
+	print("🔧 UI DEBUG: Creating dialogue UI elements...")
+	
+	# Create main dialogue panel
+	dialogue_panel = Panel.new()
+	dialogue_panel.name = "DialoguePanel"
+	dialogue_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	dialogue_panel.offset_left = -500
+	dialogue_panel.offset_top = -320  # Increased height for 4 options
+	dialogue_panel.offset_right = 500
+	dialogue_panel.offset_bottom = 320
+	add_child(dialogue_panel)
+	
+	# Create VBoxContainer for layout
+	var vbox = VBoxContainer.new()
+	vbox.name = "VBoxContainer"
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	vbox.add_theme_constant_override("separation", 10)
+	dialogue_panel.add_child(vbox)
+	
+	# Create NPC name label
+	npc_label = Label.new()
+	npc_label.name = "NPCLabel"
+	npc_label.text = "NPC Name"
+	npc_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	npc_label.add_theme_font_size_override("font_size", 24)
+	npc_label.add_theme_color_override("font_color", Color.WHITE)
+	vbox.add_child(npc_label)
+	
+	# Create dialogue text label
+	dialogue_label = Label.new()
+	dialogue_label.name = "DialogueLabel"
+	dialogue_label.text = "Dialogue text will appear here..."
+	dialogue_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	dialogue_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	dialogue_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	dialogue_label.add_theme_font_size_override("font_size", 18)
+	dialogue_label.add_theme_color_override("font_color", Color.LIGHT_GRAY)
+	dialogue_label.custom_minimum_size = Vector2(0, 150)
+	vbox.add_child(dialogue_label)
+	
+	# Create options container
+	options_container = VBoxContainer.new()
+	options_container.name = "OptionsContainer"
+	vbox.add_child(options_container)
+	
+	# Create close button
+	close_button = Button.new()
+	close_button.name = "CloseButton"
+	close_button.text = "Close"
+	close_button.custom_minimum_size = Vector2(100, 40)
+	vbox.add_child(close_button)
+	
+	# Create controls label
+	var controls_label = Label.new()
+	controls_label.name = "ControlsLabel"
+	controls_label.text = "Controls: [↑↓] Navigate, [Space/A] Select, [1-4/A-B-X-Y] Direct, [Enter] Continue, [Esc] Cancel"
+	controls_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	controls_label.add_theme_font_size_override("font_size", 12)
+	controls_label.add_theme_color_override("font_color", Color.GRAY)
+	vbox.add_child(controls_label)
+	
+	print("✅ UI DEBUG: Dialogue UI elements created successfully!")
 
 func _on_component_input(event):
 	# Only process input when the dialogue UI is visible
@@ -212,21 +294,28 @@ func _find_npc_in_tree(node: Node, npc_name: String) -> CulturalNPC:
 	return null
 
 func start_dialogue_with_npc(npc: CulturalNPC):
+	print("🎯 DIALOGUE START: Starting dialogue with NPC: ", npc.npc_name)
+	print("🎯 DIALOGUE START: Current NPC before: ", current_npc.name if current_npc else "None")
 	GameLogger.debug("Starting dialogue with NPC: " + npc.npc_name + ", current_npc=" + str(current_npc))
 	
 	# Don't start new dialogue if we already have one active
 	if current_npc != null:
+		print("⚠️ DIALOGUE START: Dialogue already active, ignoring new start request")
 		GameLogger.debug("Dialogue already active, ignoring new start request")
 		return
 		
 	current_npc = npc
 	current_dialogue_id = "greeting"  # Start with greeting
+	print("🎯 DIALOGUE START: Set current_npc to: ", current_npc.npc_name)
+	print("🎯 DIALOGUE START: Set dialogue_id to: ", current_dialogue_id)
 	
 	# Show dialogue panel
 	show_dialogue_panel()
+	print("🎯 DIALOGUE START: Dialogue panel shown")
 	
 	# Load and display initial dialogue
 	load_and_display_dialogue()
+	print("🎯 DIALOGUE START: load_and_display_dialogue() called")
 
 func show_dialogue_panel():
 	dialogue_panel.visible = true
@@ -262,14 +351,24 @@ func add_keyboard_controls_indicator():
 	controls_label.position = Vector2(10, dialogue_panel.size.y - 30)
 
 func load_and_display_dialogue():
+	print("🔊 AUDIO DEBUG: load_and_display_dialogue() called!")
+	print("🔊 AUDIO DEBUG: Current NPC: ", current_npc.name if current_npc else "None")
+	print("🔊 AUDIO DEBUG: Current dialogue ID: ", current_dialogue_id)
+	
 	if not current_npc:
+		print("❌ AUDIO ERROR: No current NPC")
 		return
 	
 	# Get dialogue by ID
 	var dialogue = current_npc.get_dialogue_by_id(current_dialogue_id)
 	if dialogue.is_empty():
+		print("⚠️ AUDIO DEBUG: Dialogue not found for ID: ", current_dialogue_id, ", falling back to initial dialogue")
 		# Fallback to initial dialogue
 		dialogue = current_npc.get_initial_dialogue()
+	
+	print("✅ AUDIO DEBUG: Dialogue found, about to display: ", dialogue.get("id", "unknown"))
+	print("🔊 AUDIO DEBUG: Dialogue type: ", dialogue.get("dialogue_type", "short"))
+	print("🔊 AUDIO DEBUG: Dialogue audio: ", dialogue.get("audio_file", "none"))
 	
 	# Display dialogue
 	display_dialogue(dialogue)
@@ -293,22 +392,16 @@ func display_dialogue(dialogue: Dictionary):
 		message_text = ""
 		GameLogger.warning("DialogueUI: Invalid message text detected, using empty string")
 	
-	# Additional text validation to prevent corruption
-	var clean_text = str(message_text)
-	# Clean and validate text
+	# Use UnicodeUtils for proper text sanitization
+	var clean_text = UnicodeUtils.sanitize_text(message_text)
 	clean_text = clean_text.strip_edges()      # Remove leading/trailing whitespace
 	
-	# Validate Unicode to prevent corruption (400001 error prevention)
-	if clean_text.length() > 0:
-		var valid_chars = ""
-		for i in range(clean_text.length()):
-			var char_code = clean_text.unicode_at(i)
-			# Only allow valid Unicode range (0x0 to 0x10FFFF)
-			if char_code >= 0 and char_code <= 0x10FFFF:
-				valid_chars += clean_text[i]
-			else:
-				GameLogger.warning("DialogueUI: Invalid Unicode codepoint detected: " + str(char_code) + " - removing")
-		clean_text = valid_chars
+	# Log Unicode info for debugging
+	var unicode_info = UnicodeUtils.get_unicode_info(clean_text)
+	if not unicode_info.is_valid:
+		GameLogger.warning("DialogueUI: Invalid Unicode detected - " + str(unicode_info.invalid_chars.size()) + " invalid characters")
+	else:
+		GameLogger.debug("DialogueUI: Text validated - " + str(unicode_info.length) + " chars, " + str(unicode_info.byte_length) + " bytes")
 	
 	# Validate text length to prevent extremely long corruptions
 	if clean_text.length() > 10000:  # Sanity check for text length
@@ -334,6 +427,10 @@ func display_dialogue(dialogue: Dictionary):
 		var option = dialogue_options[i]
 		add_dialogue_option(option, i + 1)  # Pass option number (1, 2, 3, 4)
 	
+	# Play audio for this dialogue if it's a "long" type
+	print("🔊 AUDIO DEBUG: About to call play_dialogue_audio() with dialogue: ", dialogue.get("id", "unknown"))
+	call_deferred("play_dialogue_audio", dialogue)
+	
 	# Mark update as complete
 	is_updating_dialogue = false
 	
@@ -355,6 +452,99 @@ func reset_corruption_protection():
 	is_updating_dialogue = false
 	dialogue_update_queue.clear()
 	GameLogger.debug("DialogueUI: Corruption protection state reset")
+
+func setup_audio_player():
+	"""Initialize audio player for dialogue"""
+	audio_player = AudioStreamPlayer.new()
+	audio_player.name = "DialogueAudioPlayer"
+	audio_player.autoplay = false
+	audio_player.volume_db = 0.0
+	audio_player.bus = "UI"  # Route to UI audio bus for better control
+	add_child(audio_player)
+	
+	print("🔊 AUDIO DEBUG: Audio player initialized!")
+	print("🔊 AUDIO DEBUG: Player volume: ", audio_player.volume_db, " dB")
+	print("🔊 AUDIO DEBUG: Player autoplay: ", audio_player.autoplay)
+	print("🔊 AUDIO DEBUG: Player bus: ", audio_player.bus)
+	print("🔊 AUDIO DEBUG: Player parent: ", audio_player.get_parent().name if audio_player.get_parent() else "None")
+	
+	GameLogger.debug("DialogueUI: Audio player initialized with volume: " + str(audio_player.volume_db) + " on bus: " + audio_player.bus)
+
+func play_dialogue_audio(dialogue: Dictionary):
+	"""Play audio for dialogue if available"""
+	print("🔊 AUDIO DEBUG: play_dialogue_audio() called!")
+	print("🔊 AUDIO DEBUG: Dialogue data: ", dialogue)
+	
+	if not audio_player:
+		print("❌ AUDIO ERROR: Audio player not initialized!")
+		GameLogger.warning("DialogueUI: Audio player not initialized")
+		return
+		
+	var audio_file_path = dialogue.get("audio_file", "")
+	var dialogue_type = dialogue.get("dialogue_type", "short")
+	
+	print("🔊 AUDIO DEBUG: Dialogue type: '", dialogue_type, "'")
+	print("🔊 AUDIO DEBUG: Audio file path: '", audio_file_path, "'")
+	
+	GameLogger.debug("DialogueUI: Audio request - type: " + dialogue_type + ", file: " + audio_file_path)
+	
+	# Only play audio for "long" dialogues
+	if dialogue_type != "long":
+		print("🔊 AUDIO DEBUG: Skipping audio - dialogue type is '", dialogue_type, "', not 'long'")
+		GameLogger.debug("DialogueUI: Skipping audio - not a 'long' dialogue type")
+		return
+		
+	if audio_file_path == "":
+		print("🔊 AUDIO DEBUG: Skipping audio - no audio file path provided")
+		GameLogger.debug("DialogueUI: Skipping audio - no audio file path")
+		return
+		
+	print("🔊 AUDIO DEBUG: Attempting to play audio...")
+	
+	# Stop any current audio
+	audio_player.stop()
+	
+	# Check if file exists
+	if not FileAccess.file_exists(audio_file_path):
+		print("❌ AUDIO ERROR: Audio file does not exist: ", audio_file_path)
+		GameLogger.warning("DialogueUI: Audio file does not exist: " + audio_file_path)
+		return
+	
+	print("✅ AUDIO DEBUG: Audio file exists: ", audio_file_path)
+	
+	# Load and play audio file
+	var audio_stream = load(audio_file_path)
+	if audio_stream:
+		print("✅ AUDIO DEBUG: Audio stream loaded successfully!")
+		print("🔊 AUDIO DEBUG: Stream length: ", audio_stream.get_length(), " seconds")
+		print("🔊 AUDIO DEBUG: Stream format: ", audio_stream.get_class())
+		audio_player.stream = audio_stream
+		audio_player.play()
+		print("🔊 AUDIO DEBUG: Audio player.play() called!")
+		print("🔊 AUDIO DEBUG: Is audio playing? ", audio_player.playing)
+		print("🔊 AUDIO DEBUG: Audio bus: ", audio_player.bus)
+		print("🔊 AUDIO DEBUG: Audio volume: ", audio_player.volume_db, " dB")
+		
+		# Check if audio bus exists and is not muted
+		if AudioServer.get_bus_count() > 0:
+			var ui_bus_index = AudioServer.get_bus_index("UI")
+			if ui_bus_index >= 0:
+				print("🔊 AUDIO DEBUG: UI bus found at index: ", ui_bus_index)
+				print("🔊 AUDIO DEBUG: UI bus muted: ", AudioServer.is_bus_mute(ui_bus_index))
+				print("🔊 AUDIO DEBUG: UI bus volume: ", AudioServer.get_bus_volume_db(ui_bus_index), " dB")
+			else:
+				print("⚠️ AUDIO WARNING: UI bus not found, using Master bus")
+		
+		GameLogger.info("DialogueUI: Successfully playing audio: " + audio_file_path)
+	else:
+		print("❌ AUDIO ERROR: Could not load audio stream from: ", audio_file_path)
+		GameLogger.warning("DialogueUI: Could not load audio stream from: " + audio_file_path)
+
+func stop_dialogue_audio():
+	"""Stop current dialogue audio"""
+	if audio_player and audio_player.playing:
+		audio_player.stop()
+		GameLogger.debug("DialogueUI: Audio stopped")
 
 func clear_options():
 	# Remove all option buttons except the close button
@@ -431,6 +621,9 @@ func hide_dialogue():
 	GameLogger.debug("Hiding dialogue - panel visible was: " + str(dialogue_panel.visible))
 	dialogue_panel.visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	
+	# Stop any playing audio
+	stop_dialogue_audio()
 	
 	# Reset state
 	current_npc = null

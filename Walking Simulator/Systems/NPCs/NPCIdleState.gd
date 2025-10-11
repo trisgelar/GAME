@@ -23,6 +23,32 @@ func update(delta: float):
 		
 		# Check if player wants to interact
 		if Input.is_action_just_pressed("interact"):
+			print("🎯 NPC INTERACTION: ", npc.npc_name, " detected interact key press!")
+			print("🎯 NPC INTERACTION: Player distance: ", npc.position.distance_to(npc.player.position))
+			
+			# Check if there's already an active dialogue with another NPC
+			if npc.active_dialogue_npc != null and npc.active_dialogue_npc != npc:
+				print("🎯 NPC INTERACTION: ", npc.npc_name, " blocked - another NPC (", npc.active_dialogue_npc.npc_name, ") has active dialogue")
+				return
+			
+			# Only the closest NPC should respond
+			var all_npcs = npc.get_tree().get_nodes_in_group("npc")
+			var closest_npc = null
+			var closest_distance = 999.0
+			
+			for other_npc in all_npcs:
+				if other_npc != npc and other_npc.has_method("get") and other_npc.get("player"):
+					var distance = other_npc.position.distance_to(other_npc.player.position)
+					if distance < closest_distance:
+						closest_distance = distance
+						closest_npc = other_npc
+			
+			var my_distance = npc.position.distance_to(npc.player.position)
+			if closest_npc and my_distance > closest_distance:
+				print("🎯 NPC INTERACTION: ", npc.npc_name, " blocked - ", closest_npc.npc_name, " is closer (", closest_distance, " vs ", my_distance, ")")
+				return
+			
+			print("🎯 NPC INTERACTION: ", npc.npc_name, " proceeding with interaction")
 			change_to_interacting()
 			return
 	else:

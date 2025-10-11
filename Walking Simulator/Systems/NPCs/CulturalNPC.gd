@@ -63,7 +63,17 @@ func _ready():
 	# Always use manual dialogue assignment for Tambora NPCs
 	setup_manual_dialogue_for_npc()
 	
+	# Sanitize all dialogue text using UnicodeUtils
+	sanitize_all_dialogue_text()
+	
 	print("DEBUG: Loaded ", str(dialogue_data.size()), " dialogue entries for ", npc_name)
+	
+	# Debug: Show dialogue structure with audio info
+	for i in range(dialogue_data.size()):
+		var dialogue = dialogue_data[i]
+		print("🔊 AUDIO DEBUG: Dialogue ", i, " - ID: ", dialogue.get("id", "unknown"))
+		print("🔊 AUDIO DEBUG: Dialogue ", i, " - Type: ", dialogue.get("dialogue_type", "short"))
+		print("🔊 AUDIO DEBUG: Dialogue ", i, " - Audio: ", dialogue.get("audio_file", "none"))
 	
 	if has_node("/root/DebugConfig") and not get_node("/root/DebugConfig").enable_npc_debug:
 		return
@@ -349,11 +359,57 @@ func start_visual_dialogue():
 		active_dialogue_npc = null  # Clear if no dialogue
 		return
 	
-	# Display dialogue UI
+	# Use the beautiful custom UI system with audio support
 	display_dialogue_ui(initial_dialogue)
 	
 	# NOTE: We now use _input() method for input handling instead of timer polling
 	# Timer system is disabled to prevent conflicts
+
+func start_npc_dialogue_ui():
+	"""Start dialogue using our enhanced NPCDialogueUI system with audio support"""
+	print("🎯 DIALOGUE START: Starting NPCDialogueUI for NPC: ", npc_name)
+	
+	# Try multiple ways to find the NPCDialogueUI
+	var dialogue_ui = null
+	
+	# Method 1: Try to find it in the UI scene
+	dialogue_ui = get_tree().get_first_node_in_group("dialogue_ui")
+	
+	# Method 2: Try to find it by name in the scene tree
+	if not dialogue_ui:
+		dialogue_ui = get_tree().get_first_node_in_group("dialogue_ui")
+		if not dialogue_ui:
+			# Search recursively for NPCDialogueUI node
+			dialogue_ui = find_npc_dialogue_ui(get_tree().root)
+	
+	# Method 3: Try to find it relative to this NPC's scene
+	if not dialogue_ui:
+		var ui_node = get_node_or_null("../../UI/NPCDialogueUI")
+		if ui_node:
+			dialogue_ui = ui_node
+	
+	if not dialogue_ui:
+		print("❌ DIALOGUE ERROR: NPCDialogueUI not found in scene!")
+		print("🔍 DIALOGUE DEBUG: Searched for NPCDialogueUI in groups and scene tree")
+		GameLogger.error("🔥 NPCDialogueUI not found in scene tree")
+		return
+	
+	print("✅ DIALOGUE START: Found NPCDialogueUI, starting dialogue")
+	
+	# Start dialogue with our enhanced UI system
+	dialogue_ui.start_dialogue_with_npc(self)
+
+func find_npc_dialogue_ui(node: Node) -> Node:
+	"""Recursively search for NPCDialogueUI node"""
+	if node.name == "NPCDialogueUI":
+		return node
+	
+	for child in node.get_children():
+		var result = find_npc_dialogue_ui(child)
+		if result:
+			return result
+	
+	return null
 
 func display_dialogue_ui(dialogue: Dictionary):
 	# Close all existing dialogue UIs first to prevent conflicts
@@ -542,6 +598,12 @@ func display_dialogue_ui(dialogue: Dictionary):
 		GameLogger.debug("Displaying dialog text: " + text_content)
 		# Use typewriter animation to prevent accidental fast clicking
 		start_typewriter_animation(message_text_node, "[i]" + text_content + "[/i]")
+		
+		# Play audio for this dialogue if it's a "long" type
+		play_dialogue_audio(dialogue)
+		
+		# Sync typewriter animation with audio duration for better timing
+		sync_typewriter_with_audio(message_text_node, dialogue)
 	else:
 		GameLogger.warning("MessageText node not found in dialog UI")
 	
@@ -826,7 +888,7 @@ func start_typewriter_animation(message_text: RichTextLabel, full_text: String):
 	# Create a new timer
 	var typewriter_timer = Timer.new()
 	typewriter_timer.name = "TypewriterTimer"
-	typewriter_timer.wait_time = 0.05  # Slightly slower for better visibility
+	typewriter_timer.wait_time = 0.08  # 80ms between characters - slower for audio sync
 	add_child(typewriter_timer)
 	
 	# Store animation state in the timer to avoid variable scope issues
@@ -901,6 +963,106 @@ func start_typewriter_animation(message_text: RichTextLabel, full_text: String):
 	GameLogger.debug("Starting typewriter timer")
 	typewriter_timer.start()
 
+func play_dialogue_audio(dialogue: Dictionary):
+	"""Play audio for dialogue if available"""
+	print("🔊 AUDIO DEBUG: play_dialogue_audio() called!")
+	print("🔊 AUDIO DEBUG: Dialogue data: ", dialogue)
+	
+	# Only play audio for "long" type dialogues
+	var dialogue_type = dialogue.get("dialogue_type", "short")
+	if dialogue_type != "long":
+		print("🔊 AUDIO DEBUG: Skipping audio - not a 'long' dialogue type")
+		GameLogger.debug("CulturalNPC: Skipping audio - not a 'long' dialogue type")
+		return
+		
+	var audio_file_path = dialogue.get("audio_file", "")
+	if audio_file_path == "":
+		print("🔊 AUDIO DEBUG: Skipping audio - no audio file path provided")
+		GameLogger.debug("CulturalNPC: Skipping audio - no audio file path")
+		return
+		
+	print("🔊 AUDIO DEBUG: Attempting to play audio...")
+	
+	# Get or create audio player
+	var audio_player = get_node_or_null("DialogueAudioPlayer")
+	if not audio_player:
+		print("🔊 AUDIO DEBUG: Creating audio player...")
+		audio_player = AudioStreamPlayer.new()
+		audio_player.name = "DialogueAudioPlayer"
+		audio_player.autoplay = false
+		audio_player.volume_db = 0.0
+		audio_player.bus = "UI"  # Route to UI audio bus
+		add_child(audio_player)
+		print("🔊 AUDIO DEBUG: Audio player created!")
+	
+	# Stop any current audio
+	audio_player.stop()
+	
+	# Check if file exists
+	if not FileAccess.file_exists(audio_file_path):
+		print("❌ AUDIO ERROR: Audio file does not exist: ", audio_file_path)
+		GameLogger.warning("CulturalNPC: Audio file does not exist: " + audio_file_path)
+		return
+	
+	print("✅ AUDIO DEBUG: Audio file exists: ", audio_file_path)
+	
+	# Load and play audio file
+	var audio_stream = load(audio_file_path)
+	if audio_stream:
+		print("✅ AUDIO DEBUG: Audio stream loaded successfully!")
+		print("🔊 AUDIO DEBUG: Stream length: ", audio_stream.get_length(), " seconds")
+		print("🔊 AUDIO DEBUG: Stream format: ", audio_stream.get_class())
+		audio_player.stream = audio_stream
+		audio_player.play()
+		print("🔊 AUDIO DEBUG: Audio player.play() called!")
+		print("🔊 AUDIO DEBUG: Is audio playing? ", audio_player.playing)
+		print("🔊 AUDIO DEBUG: Audio bus: ", audio_player.bus)
+		print("🔊 AUDIO DEBUG: Audio volume: ", audio_player.volume_db, " dB")
+		
+		GameLogger.info("CulturalNPC: Successfully playing audio: " + audio_file_path)
+	else:
+		print("❌ AUDIO ERROR: Could not load audio stream from: ", audio_file_path)
+		GameLogger.warning("CulturalNPC: Could not load audio stream from: " + audio_file_path)
+
+func stop_dialogue_audio():
+	"""Stop current dialogue audio"""
+	var audio_player = get_node_or_null("DialogueAudioPlayer")
+	if audio_player and audio_player.playing:
+		audio_player.stop()
+		GameLogger.debug("CulturalNPC: Audio stopped")
+
+func sync_typewriter_with_audio(message_text: RichTextLabel, dialogue: Dictionary):
+	"""Adjust typewriter speed to sync with audio duration"""
+	var dialogue_type = dialogue.get("dialogue_type", "short")
+	if dialogue_type != "long":
+		return  # Only sync for long dialogues with audio
+	
+	var audio_duration = dialogue.get("audio_duration", 0.0)
+	if audio_duration <= 0:
+		return  # No audio duration info available
+	
+	# Calculate optimal typewriter speed based on text length and audio duration
+	var text_content = dialogue.get("message", "")
+	var text_length = text_content.length()
+	
+	if text_length > 0:
+		# Aim for text to finish 1-2 seconds before audio ends
+		var target_text_duration = audio_duration - 2.0
+		if target_text_duration < audio_duration * 0.5:  # Don't make it too fast
+			target_text_duration = audio_duration * 0.7
+		
+		var optimal_wait_time = target_text_duration / text_length
+		optimal_wait_time = clamp(optimal_wait_time, 0.05, 0.15)  # Between 50ms and 150ms per character
+		
+		print("🔊 AUDIO SYNC: Audio duration: ", audio_duration, "s, Text length: ", text_length, " chars")
+		print("🔊 AUDIO SYNC: Optimal wait time: ", optimal_wait_time, "s per character")
+		
+		# Update the typewriter timer if it exists
+		var typewriter_timer = get_node_or_null("TypewriterTimer")
+		if typewriter_timer:
+			typewriter_timer.wait_time = optimal_wait_time
+			print("🔊 AUDIO SYNC: Updated typewriter speed to ", optimal_wait_time, "s per character")
+
 func end_visual_dialogue():
 	# Check if we're still valid before processing
 	if not is_instance_valid(self):
@@ -911,6 +1073,9 @@ func end_visual_dialogue():
 	if active_dialogue_npc == self:
 		active_dialogue_npc = null
 		GameLogger.info("CulturalNPC (" + npc_name + "): Cleared active dialogue NPC")
+	
+	# Stop any playing dialogue audio
+	stop_dialogue_audio()
 	
 	# Close only THIS NPC's dialogue UI, not all UIs to allow other NPCs to interact
 	close_npc_dialogue_ui()
@@ -989,6 +1154,19 @@ func emit_interaction_event():
 	else:
 		GameLogger.error("EventBus not available for " + npc_name)
 
+func sanitize_all_dialogue_text():
+	"""Sanitize all dialogue text using UnicodeUtils to prevent corruption"""
+	for dialogue in dialogue_data:
+		if dialogue.has("message"):
+			dialogue["message"] = UnicodeUtils.sanitize_text(dialogue["message"])
+		
+		if dialogue.has("options"):
+			for option in dialogue["options"]:
+				if option.has("text"):
+					option["text"] = UnicodeUtils.sanitize_text(option["text"])
+	
+	GameLogger.debug("Sanitized all dialogue text for " + npc_name)
+
 func setup_manual_dialogue_for_npc():
 	"""Set up dialogue manually based on NPC name - simple and reliable"""
 	dialogue_data.clear()
@@ -1012,6 +1190,7 @@ func setup_manual_dialogue_for_npc():
 
 func setup_dr_heinrich_dialogue():
 	"""Dr. Heinrich - Swiss botanist who climbed Tambora in 1847"""
+	print("🔊 AUDIO DEBUG: Setting up Dr. Heinrich dialogue...")
 	dialogue_data = [
 		{
 			"id": "greeting",
@@ -1025,7 +1204,7 @@ func setup_dr_heinrich_dialogue():
 		},
 		{
 			"id": "expedition_story",
-			"message": "The climb took tremendous courage. The mountain was still considered cursed by local people. They told me, 'Wherever one steps, fire emerges from the earth. The mountain is inhabited by evil spirits. Storms, bad weather, and death await those who are not careful and are tempted by the ghosts of hell.' But my scientific curiosity drove me forward. I was filled with enthusiasm when I became the first person after the eruption to set foot on the summit of this mountain famous for its terrible story.",
+			"message": "The climb took tremendous courage. The mountain was still considered cursed by local people. They told me, Wherever one steps, fire emerges from the earth. The mountain is inhabited by evil spirits. Storms, bad weather, and death await those who are not careful and are tempted by the ghosts of hell. But my scientific curiosity drove me forward. I was filled with enthusiasm when I became the first person after the eruption to set foot on the summit of this mountain famous for its terrible story.",
 			"dialogue_type": "long",
 			"audio_file": "res://Assets/Audio/Dialog/dr_heinrich_expedition_story.wav",
 			"audio_duration": 45.0,
@@ -1037,7 +1216,7 @@ func setup_dr_heinrich_dialogue():
 		},
 		{
 			"id": "local_warnings",
-			"message": "The Sumbawan people had ancient wisdom about this mountain. They called it 'Tambora' from the word 'Mbora' meaning 'to disappear.' They believed the mountain invited people to vanish. After the 1815 eruption, they thought the spirits had been angered. No one knew that Tambora was a volcano, because since ancient times, it had never spewed dust or lava. There was no sound that revealed there was a furnace of fire inside.",
+			"message": "The Sumbawan people had ancient wisdom about this mountain. They called it Tambora from the word Mbora meaning to disappear. They believed the mountain invited people to vanish. After the 1815 eruption, they thought the spirits had been angered. No one knew that Tambora was a volcano, because since ancient times, it had never spewed dust or lava. There was no sound that revealed there was a furnace of fire inside.",
 			"dialogue_type": "long",
 			"audio_file": "res://Assets/Audio/Dialog/dr_heinrich_local_warnings.wav",
 			"audio_duration": 38.0,
@@ -1066,7 +1245,7 @@ func setup_dr_sari_dialogue():
 	dialogue_data = [
 		{
 			"id": "greeting",
-			"message": "Hello! I'm Dr. Sari, an Indonesian volcanologist monitoring Mount Tambora. This volcano is now under constant surveillance. We have seismographs, telescopes, wind direction measurements, and thermocouples monitoring fumaroles and solfataras. Science has come a long way since 1815!",
+			"message": "Hello! Im Dr. Sari, an Indonesian volcanologist monitoring Mount Tambora. This volcano is now under constant surveillance. We have seismographs, telescopes, wind direction measurements, and thermocouples monitoring fumaroles and solfataras. Science has come a long way since 1815!",
 			"options": [
 				{"text": "Tell me about Tambora's current activity", "next_dialogue": "current_monitoring", "consequence": "share_knowledge"},
 				{"text": "What makes the 1815 eruption so significant?", "next_dialogue": "vei7_significance", "consequence": "share_knowledge"},
@@ -1088,7 +1267,7 @@ func setup_dr_sari_dialogue():
 		},
 		{
 			"id": "vei7_significance",
-			"message": "The 1815 Tambora eruption was a VEI 7 event - the most powerful volcanic eruption in recorded history. It released 400 times more energy than the largest nuclear bomb ever detonated. The mountain was 4,300 meters high before the eruption - now it's only about 2,800 meters. The eruption ejected 140 billion tons of ash and dust halfway to space, creating a 'Year Without Summer' in 1816. This was a super-colossal eruption that defined the millennium.",
+			"message": "The 1815 Tambora eruption was a VEI 7 event, the most powerful volcanic eruption in recorded history. It released 400 times more energy than the largest nuclear bomb ever detonated. The mountain was 4,300 meters high before the eruption - now it's only about 2,800 meters. The eruption ejected 140 billion tons of ash and dust halfway to space, creating a Year Without Summer in 1816. This was a super-colossal eruption that defined the millennium.",
 			"dialogue_type": "long",
 			"audio_file": "res://Assets/Audio/Dialog/dr_sari_vei7_significance.wav",
 			"audio_duration": 48.0,

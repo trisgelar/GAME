@@ -38,7 +38,7 @@ extends Resource
 
 @export var map_settings: Dictionary = {
 	"map_scale": 0.6,
-	"camera_initial_position": Vector3(20, 80, 120),  # Better position to see all Indonesia
+	"camera_initial_position": Vector3(-10.219, 146.234, 212.517),  # Perfect position to see all Indonesia islands
 	"camera_zoom_speed": 8.0,  # Faster zoom for better navigation
 	"mouse_sensitivity": 0.5,
 	"camera_min_distance": 30.0,  # Closer minimum for detail

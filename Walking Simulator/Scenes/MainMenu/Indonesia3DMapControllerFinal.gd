@@ -14,7 +14,7 @@ extends Node3D
 var camera_zoom_speed: float = 3.0  # Slower zoom for better control
 var mouse_sensitivity: float = 0.3  # Lower sensitivity for smoother rotation
 var camera_min_distance: float = 100.0  # Prevent getting too close with huge placeholders
-var camera_max_distance: float = 400.0  # Much further max distance to see huge placeholders
+var camera_max_distance: float = 1000.0  # Much further max distance to see huge placeholders
 
 # Map and UI references
 @onready var map_camera: Camera3D = $MapCamera
@@ -47,7 +47,7 @@ var region_placeholders: Dictionary = {}
 
 # Map scale and positioning
 var map_scale: float = 0.6
-var camera_initial_position: Vector3 = Vector3(20, 80, 120)  # Higher and further back to see all Indonesia
+var camera_initial_position: Vector3 = Vector3(-10.219, 146.234, 212.517)  # Position from image to see all islands
 
 # Navigation System
 var buttons: Array[Button] = []
@@ -105,7 +105,9 @@ func _load_config():
 	mouse_sensitivity = settings.get("mouse_sensitivity", 0.3)  # Better control
 	camera_min_distance = settings.get("camera_min_distance", 40.0)  # Prevent fogginess
 	camera_max_distance = settings.get("camera_max_distance", 150.0)  # Better visibility
-	camera_initial_position = settings.get("camera_initial_position", Vector3(0, 50, 30))
+	# Force camera position to match desired view
+	camera_initial_position = Vector3(-10.219, 146.234, 212.517)
+	print("🔧 CAMERA DEBUG: Config loaded, but forcing camera position to: ", camera_initial_position)
 	
 	GameLogger.info("⚙️ Camera settings loaded from config")
 
@@ -134,7 +136,7 @@ func create_sea_plane():
 	
 	# Get sea settings from config
 	var sea_settings = map_config.sea_settings if map_config else {
-		"sea_width": 400.0,
+		"sea_width": 700.0,
 		"sea_depth": 200.0,
 		"sea_position": Vector3(20, -0.3, 38),
 		"sea_color": Color(0.1, 0.3, 0.7, 0.9)
@@ -181,14 +183,25 @@ func setup_ui():
 
 func setup_camera():
 	"""Setup camera position and lighting"""
+	print("🔧 CAMERA DEBUG: camera_initial_position before assignment: ", camera_initial_position)
+	
+	# Force the exact position we want
+	camera_initial_position = Vector3(-10.219, 146.234, 212.517)
 	target_camera_position = camera_initial_position
-	target_camera_rotation = Vector3(-35, 0, 0)  # Better angle to see all islands
+	target_camera_rotation = Vector3(-40.0, 0.0, 0.0)  # Rotation from image to see all islands
+	
+	print("🔧 CAMERA DEBUG: Final camera_initial_position: ", camera_initial_position)
+	print("🔧 CAMERA DEBUG: Final target_camera_position: ", target_camera_position)
+	
 	map_camera.position = target_camera_position
 	map_camera.rotation_degrees = target_camera_rotation
 	map_camera.fov = 50.0  # Wider field of view to see more
 	
+	print("🔧 CAMERA DEBUG: Actual map_camera.position after setting: ", map_camera.position)
+	print("🔧 CAMERA DEBUG: Actual map_camera.rotation_degrees after setting: ", map_camera.rotation_degrees)
+	
 	setup_basic_lighting()
-	GameLogger.info("🔧 Camera setup completed")
+	GameLogger.info("🔧 Camera setup completed with position: " + str(target_camera_position) + " and rotation: " + str(target_camera_rotation))
 
 func setup_basic_lighting():
 	"""Add enhanced lighting for better aesthetics"""
