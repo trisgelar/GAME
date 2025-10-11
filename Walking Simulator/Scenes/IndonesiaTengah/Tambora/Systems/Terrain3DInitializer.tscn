@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://btpvykobhtyj4"]
+
+[ext_resource type="Script" uid="uid://b2y2mbnr51v7l" path="res://Systems/Terrain3D/Core/Terrain3DInitializer.gd" id="1_script"]
+
+[node name="Terrain3DInitializer" type="Node3D"]
+script = ExtResource("1_script")

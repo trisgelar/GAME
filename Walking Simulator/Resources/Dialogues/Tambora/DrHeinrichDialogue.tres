@@ -1,0 +1,105 @@
+[gd_resource type="DialogueResource" format=3 uid="uid://5olkldtcni5j"]
+
+[resource]
+resource_local_to_scene = false
+resource_name = ""
+dialogue_id = "dr_heinrich_tambora"
+npc_name = "Dr. Heinrich"
+dialogue_type = "historian"
+cultural_region = "Indonesia Tengah"
+dialogue_nodes = [{
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "expedition_story",
+"option_text": "Tell me about your 1847 expedition"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "local_warnings",
+"option_text": "What did the locals warn you about?"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "summit_discoveries",
+"option_text": "What did you discover at the summit?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Goodbye"
+}],
+"dialogue_type": "short",
+"message": "Greetings! I am Dr. Heinrich Zollinger, a Swiss botanist. In 1847, I became the first European to climb Mount Tambora after its devastating 1815 eruption. The locals warned me that spirits inhabit this mountain, but I was determined to study its mysteries.",
+"node_id": "greeting",
+"speaker": "Dr. Heinrich"
+}, {
+"audio_duration": 45.0,
+"audio_file": "res://Assets/Audio/Dialog/dr_heinrich_expedition_story.wav",
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "local_warnings",
+"option_text": "What did the locals warn you about?"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "summit_discoveries",
+"option_text": "What did you discover at the summit?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Thank you for sharing your story"
+}],
+"dialogue_type": "long",
+"message": "The climb took tremendous courage. The mountain was still considered cursed by local people. They told me, 'Wherever one steps, fire emerges from the earth. The mountain is inhabited by evil spirits. Storms, bad weather, and death await those who are not careful and are tempted by the ghosts of hell.' But my scientific curiosity drove me forward. I was filled with enthusiasm when I became the first person after the eruption to set foot on the summit of this mountain famous for its terrible story.",
+"node_id": "expedition_story",
+"speaker": "Dr. Heinrich"
+}, {
+"audio_duration": 38.0,
+"audio_file": "res://Assets/Audio/Dialog/dr_heinrich_local_warnings.wav",
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "expedition_story",
+"option_text": "Tell me about your expedition"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "summit_discoveries",
+"option_text": "What did you discover at the summit?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Fascinating local beliefs"
+}],
+"dialogue_type": "long",
+"message": "The Sumbawan people had ancient wisdom about this mountain. They called it 'Tambora' from the word 'Mbora' meaning 'to disappear.' They believed the mountain invited people to vanish. After the 1815 eruption, they thought the spirits had been angered. No one knew that Tambora was a volcano, because since ancient times, it had never spewed dust or lava. There was no sound that revealed there was a furnace of fire inside.",
+"node_id": "local_warnings",
+"speaker": "Dr. Heinrich"
+}, {
+"audio_duration": 42.0,
+"audio_file": "res://Assets/Audio/Dialog/dr_heinrich_summit_discoveries.wav",
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "expedition_story",
+"option_text": "Tell me about your expedition"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "local_warnings",
+"option_text": "What did the locals warn you about?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Thank you for the insights"
+}],
+"dialogue_type": "long",
+"message": "At the summit, I discovered a landscape transformed by the eruption. The mountain that was once 4,000 meters high was now reduced to about 2,800 meters. The caldera was immense - evidence of the tremendous power that had been unleashed. I documented the volcanic features, collected botanical samples, and studied the geological formations. When I successfully descended, the locals celebrated, believing the curse was finally lifted and the evil spirits had been expelled.",
+"node_id": "summit_discoveries",
+"speaker": "Dr. Heinrich"
+}]

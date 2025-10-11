@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://catt1pemwf4p"]
+
+[node name="MountainPath" type="Node3D"]
+
+[node name="Path1" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, -16.7285)
+size = Vector3(3, 0.2, 33.457)
+
+[node name="Path2" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -5)
+size = Vector3(3, 0.2, 15)
+
+[node name="Path3" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+size = Vector3(3, 0.2, 10)

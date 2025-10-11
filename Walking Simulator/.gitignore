@@ -237,4 +237,11 @@ __pycache__/
 # Coverage reports
 htmlcov/
 .coverage
-.coverage.*
+.coverage.*  
+# ===========================================  
+# EXCEPTIONS: Important scene files  
+# ===========================================  
+  
+# Tambora scenes are important - don't ignore them  
+!Scenes/IndonesiaTengah/Tambora/**/*.tscn  
+!Scenes/IndonesiaTengah/Tambora/**/*.scn 

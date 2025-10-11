@@ -1,6 +1,8 @@
 class_name CulturalNPC
 extends CulturalInteractableObject
 
+# Dialogue resource classes are now available globally via class_name
+
 # Static variable to track which NPC has active dialogue
 static var active_dialogue_npc: CulturalNPC = null
 
@@ -8,6 +10,7 @@ static var active_dialogue_npc: CulturalNPC = null
 @export var cultural_region: String
 @export var npc_type: String = "Guide"  # Guide, Vendor, Historian
 @export var dialogue_data: Array[Dictionary] = []
+@export var dialogue_resource: DialogueResource  # New resource-based dialogue system
 @export var interaction_range: float = 3.0
 @export var npc_model: PackedScene
 
@@ -54,9 +57,13 @@ func _ready():
 	# Setup quest artifact based on NPC type and name
 	setup_quest_artifact()
 	
-	# Initialize dialogue data if empty
-	if dialogue_data.is_empty():
-		setup_default_dialogue()
+	# Load dialogue manually based on NPC name
+	print("DEBUG: CulturalNPC _ready() called for NPC: ", npc_name)
+	
+	# Always use manual dialogue assignment for Tambora NPCs
+	setup_manual_dialogue_for_npc()
+	
+	print("DEBUG: Loaded ", str(dialogue_data.size()), " dialogue entries for ", npc_name)
 	
 	if has_node("/root/DebugConfig") and not get_node("/root/DebugConfig").enable_npc_debug:
 		return
@@ -982,6 +989,321 @@ func emit_interaction_event():
 	else:
 		GameLogger.error("EventBus not available for " + npc_name)
 
+func setup_manual_dialogue_for_npc():
+	"""Set up dialogue manually based on NPC name - simple and reliable"""
+	dialogue_data.clear()
+	
+	match npc_name:
+		"Dr. Heinrich":
+			setup_dr_heinrich_dialogue()
+		"Dr. Sari":
+			setup_dr_sari_dialogue()
+		"Pak Budi":
+			setup_pak_budi_dialogue()
+		"Ibu Maya":
+			setup_ibu_maya_dialogue()
+		"Dr. Ahmad":
+			setup_dr_ahmad_dialogue()
+		"Pak Karsa":
+			setup_pak_karsa_dialogue()
+		_:
+			# Fallback to default dialogue for other NPCs
+			setup_default_dialogue()
+
+func setup_dr_heinrich_dialogue():
+	"""Dr. Heinrich - Swiss botanist who climbed Tambora in 1847"""
+	dialogue_data = [
+		{
+			"id": "greeting",
+			"message": "Greetings! I am Dr. Heinrich Zollinger, a Swiss botanist. In 1847, I became the first European to climb Mount Tambora after its devastating 1815 eruption. The locals warned me that spirits inhabit this mountain, but I was determined to study its mysteries.",
+			"options": [
+				{"text": "Tell me about your 1847 expedition", "next_dialogue": "expedition_story", "consequence": "share_knowledge"},
+				{"text": "What did the locals warn you about?", "next_dialogue": "local_warnings", "consequence": "share_knowledge"},
+				{"text": "What did you discover at the summit?", "next_dialogue": "summit_discoveries", "consequence": "share_knowledge"},
+				{"text": "Goodbye", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "expedition_story",
+			"message": "The climb took tremendous courage. The mountain was still considered cursed by local people. They told me, 'Wherever one steps, fire emerges from the earth. The mountain is inhabited by evil spirits. Storms, bad weather, and death await those who are not careful and are tempted by the ghosts of hell.' But my scientific curiosity drove me forward. I was filled with enthusiasm when I became the first person after the eruption to set foot on the summit of this mountain famous for its terrible story.",
+			"dialogue_type": "long",
+			"audio_file": "res://Assets/Audio/Dialog/dr_heinrich_expedition_story.wav",
+			"audio_duration": 45.0,
+			"options": [
+				{"text": "What did the locals warn you about?", "next_dialogue": "local_warnings", "consequence": "share_knowledge"},
+				{"text": "What did you discover at the summit?", "next_dialogue": "summit_discoveries", "consequence": "share_knowledge"},
+				{"text": "Thank you for sharing your story", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "local_warnings",
+			"message": "The Sumbawan people had ancient wisdom about this mountain. They called it 'Tambora' from the word 'Mbora' meaning 'to disappear.' They believed the mountain invited people to vanish. After the 1815 eruption, they thought the spirits had been angered. No one knew that Tambora was a volcano, because since ancient times, it had never spewed dust or lava. There was no sound that revealed there was a furnace of fire inside.",
+			"dialogue_type": "long",
+			"audio_file": "res://Assets/Audio/Dialog/dr_heinrich_local_warnings.wav",
+			"audio_duration": 38.0,
+			"options": [
+				{"text": "Tell me about your expedition", "next_dialogue": "expedition_story", "consequence": "share_knowledge"},
+				{"text": "What did you discover at the summit?", "next_dialogue": "summit_discoveries", "consequence": "share_knowledge"},
+				{"text": "Fascinating local beliefs", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "summit_discoveries",
+			"message": "At the summit, I discovered a landscape transformed by the eruption. The mountain that was once 4,000 meters high was now reduced to about 2,800 meters. The caldera was immense - evidence of the tremendous power that had been unleashed. I documented the volcanic features, collected botanical samples, and studied the geological formations. When I successfully descended, the locals celebrated, believing the curse was finally lifted and the evil spirits had been expelled.",
+			"dialogue_type": "long",
+			"audio_file": "res://Assets/Audio/Dialog/dr_heinrich_summit_discoveries.wav",
+			"audio_duration": 42.0,
+			"options": [
+				{"text": "Tell me about your expedition", "next_dialogue": "expedition_story", "consequence": "share_knowledge"},
+				{"text": "What did the locals warn you about?", "next_dialogue": "local_warnings", "consequence": "share_knowledge"},
+				{"text": "Thank you for the insights", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		}
+	]
+
+func setup_dr_sari_dialogue():
+	"""Dr. Sari - Indonesian volcanologist monitoring Tambora"""
+	dialogue_data = [
+		{
+			"id": "greeting",
+			"message": "Hello! I'm Dr. Sari, an Indonesian volcanologist monitoring Mount Tambora. This volcano is now under constant surveillance. We have seismographs, telescopes, wind direction measurements, and thermocouples monitoring fumaroles and solfataras. Science has come a long way since 1815!",
+			"options": [
+				{"text": "Tell me about Tambora's current activity", "next_dialogue": "current_monitoring", "consequence": "share_knowledge"},
+				{"text": "What makes the 1815 eruption so significant?", "next_dialogue": "vei7_significance", "consequence": "share_knowledge"},
+				{"text": "Could Tambora erupt again?", "next_dialogue": "future_eruption", "consequence": "share_knowledge"},
+				{"text": "Goodbye", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "current_monitoring",
+			"message": "Mount Tambora is now under comprehensive monitoring. In recent decades, we've recorded stronger seismic phases and increased volcanic steam from fumaroles. Across Indonesia, we monitor 127 active volcanoes, with 70-80% having observation posts. Some volcanoes are even monitored by three different posts, each equipped with seismographs, telescopes, wind direction measurements, and thermocouples to monitor fumaroles and solfataras.",
+			"dialogue_type": "long",
+			"audio_file": "res://Assets/Audio/Dialog/dr_sari_current_monitoring.wav",
+			"audio_duration": 35.0,
+			"options": [
+				{"text": "What makes the 1815 eruption so significant?", "next_dialogue": "vei7_significance", "consequence": "share_knowledge"},
+				{"text": "Could Tambora erupt again?", "next_dialogue": "future_eruption", "consequence": "share_knowledge"},
+				{"text": "Thank you for the information", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "vei7_significance",
+			"message": "The 1815 Tambora eruption was a VEI 7 event - the most powerful volcanic eruption in recorded history. It released 400 times more energy than the largest nuclear bomb ever detonated. The mountain was 4,300 meters high before the eruption - now it's only about 2,800 meters. The eruption ejected 140 billion tons of ash and dust halfway to space, creating a 'Year Without Summer' in 1816. This was a super-colossal eruption that defined the millennium.",
+			"dialogue_type": "long",
+			"audio_file": "res://Assets/Audio/Dialog/dr_sari_vei7_significance.wav",
+			"audio_duration": 48.0,
+			"options": [
+				{"text": "Tell me about current monitoring", "next_dialogue": "current_monitoring", "consequence": "share_knowledge"},
+				{"text": "Could Tambora erupt again?", "next_dialogue": "future_eruption", "consequence": "share_knowledge"},
+				{"text": "Fascinating scientific data", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "future_eruption",
+			"message": "Yes, Tambora could potentially erupt again. In recent years, we've recorded stronger seismic phases and increased volcanic activity. However, with our advanced monitoring systems, we can provide early warnings that could save thousands of lives. We watch for slow changes in magma reservoirs, like ground swelling and temperature increases, to detect potential eruptions before they happen.",
+			"options": [
+				{"text": "Tell me about current monitoring", "next_dialogue": "current_monitoring", "consequence": "share_knowledge"},
+				{"text": "What makes the 1815 eruption so significant?", "next_dialogue": "vei7_significance", "consequence": "share_knowledge"},
+				{"text": "Thank you for the scientific insights", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		}
+	]
+
+func setup_pak_budi_dialogue():
+	"""Pak Budi - Sumbawan elder with family stories of the eruption"""
+	dialogue_data = [
+		{
+			"id": "greeting",
+			"message": "Selamat datang! I am Pak Budi, a Sumbawan elder. My ancestors lived through the terrible 1815 eruption. The stories have been passed down through generations. Alhamdulillah, today we can see something beautiful from what happened in 1815 long ago.",
+			"options": [
+				{"text": "Tell me about the 1815 eruption", "next_dialogue": "eruption_story", "consequence": "share_knowledge"},
+				{"text": "What happened to the three kingdoms?", "next_dialogue": "kingdom_destruction", "consequence": "share_knowledge"},
+				{"text": "How did people survive?", "next_dialogue": "survival_stories", "consequence": "share_knowledge"},
+				{"text": "Goodbye", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "eruption_story",
+			"message": "On April 5, 1815, the eruption began with a pillar of fire that made the night sky bright as day. The volcano erupted for seven days before finally calming. According to records, there were about 92,000 victims - approximately 40,000 died immediately. The eruption buried millions of cubic meters of material over Sumbawa Island. The devastation was unimaginable - villages were destroyed, houses collapsed and were covered with thick ash.",
+			"dialogue_type": "long",
+			"audio_file": "res://Assets/Audio/Dialog/pak_budi_eruption_story.wav",
+			"audio_duration": 52.0,
+			"options": [
+				{"text": "What happened to the three kingdoms?", "next_dialogue": "kingdom_destruction", "consequence": "share_knowledge"},
+				{"text": "How did people survive?", "next_dialogue": "survival_stories", "consequence": "share_knowledge"},
+				{"text": "Terima kasih for the story", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "kingdom_destruction",
+			"message": "The three great kingdoms in the Tambora region were completely covered by lava flows, leaving no trace. Today, archaeologists excavating in the Kawinda area have discovered the 1815 community life - rice paddies, housing complexes, and human skeletons. Three kingdoms vanished forever under the volcanic ash. The effect of the 1815 eruption was so powerful that entire civilizations were erased from history.",
+			"dialogue_type": "long",
+			"audio_file": "res://Assets/Audio/Dialog/pak_budi_kingdom_destruction.wav",
+			"audio_duration": 40.0,
+			"options": [
+				{"text": "Tell me about the 1815 eruption", "next_dialogue": "eruption_story", "consequence": "share_knowledge"},
+				{"text": "How did people survive?", "next_dialogue": "survival_stories", "consequence": "share_knowledge"},
+				{"text": "Terima kasih for sharing", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "survival_stories",
+			"message": "Those who survived had to flee to distant islands. Many families were separated forever. The survivors carried with them the trauma of witnessing such destruction. Today, their descendants still remember the stories passed down through generations. We Sumbawan people are resilient - we have learned to live with the mountain's power and respect its might.",
+			"options": [
+				{"text": "Tell me about the 1815 eruption", "next_dialogue": "eruption_story", "consequence": "share_knowledge"},
+				{"text": "What happened to the three kingdoms?", "next_dialogue": "kingdom_destruction", "consequence": "share_knowledge"},
+				{"text": "Thank you for preserving these stories", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		}
+	]
+
+func setup_ibu_maya_dialogue():
+	"""Ibu Maya - Traditional healer with spiritual knowledge"""
+	dialogue_data = [
+		{
+			"id": "greeting",
+			"message": "Welcome, child. I am Ibu Maya, a traditional healer. In Indonesia, volcanoes have deep spiritual meaning. Mount Tambora is no exception. The mountain spirits are powerful, and we must respect them. Even today, many people come to me seeking protection and healing from volcanic influences.",
+			"options": [
+				{"text": "Tell me about volcano spirits", "next_dialogue": "spiritual_beliefs", "consequence": "share_knowledge"},
+				{"text": "What remedies do you use?", "next_dialogue": "healing_methods", "consequence": "share_knowledge"},
+				{"text": "How do you protect against volcanic dangers?", "next_dialogue": "protection_rituals", "consequence": "share_knowledge"},
+				{"text": "Goodbye", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "spiritual_beliefs",
+			"message": "Volcanoes are sacred places where the earth's energy meets the heavens. Tambora was known as a mysterious mountain long before Europeans came. The name 'Tambora' comes from 'Ta-Mbora' - meaning 'let us disappear.' The mountain invited people to vanish, and in 1815, it did just that. We must always show respect to these powerful spirits. When Heinrich Zollinger successfully climbed the mountain in 1847, people celebrated, believing the curse was finally lifted and the evil spirits had been expelled.",
+			"dialogue_type": "long",
+			"audio_file": "res://Assets/Audio/Dialog/ibu_maya_spiritual_beliefs.wav",
+			"audio_duration": 45.0,
+			"options": [
+				{"text": "What remedies do you use?", "next_dialogue": "healing_methods", "consequence": "share_knowledge"},
+				{"text": "How do you protect against volcanic dangers?", "next_dialogue": "protection_rituals", "consequence": "share_knowledge"},
+				{"text": "Thank you for sharing your wisdom", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "healing_methods",
+			"message": "I use traditional herbs and plants that grow near the volcano. These plants have absorbed the mountain's energy and can provide protection. I create amulets from volcanic stones and use prayers to calm the restless spirits. The key is to work with the mountain's energy, not against it. Many people come to me before climbing Tambora to receive blessings and protection.",
+			"options": [
+				{"text": "Tell me about volcano spirits", "next_dialogue": "spiritual_beliefs", "consequence": "share_knowledge"},
+				{"text": "How do you protect against volcanic dangers?", "next_dialogue": "protection_rituals", "consequence": "share_knowledge"},
+				{"text": "Your healing knowledge is precious", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "protection_rituals",
+			"message": "Before approaching the mountain, we perform rituals to honor the spirits. We offer prayers and small offerings at the base of the mountain. We wear amulets made from volcanic stones and carry blessed herbs. The most important thing is to show respect and humility. The mountain spirits can sense your intentions. If you come with respect and pure heart, they will protect you. If you come with arrogance or disrespect, they may test you with storms and dangerous weather.",
+			"dialogue_type": "long",
+			"audio_file": "res://Assets/Audio/Dialog/ibu_maya_protection_rituals.wav",
+			"audio_duration": 38.0,
+			"options": [
+				{"text": "Tell me about volcano spirits", "next_dialogue": "spiritual_beliefs", "consequence": "share_knowledge"},
+				{"text": "What remedies do you use?", "next_dialogue": "healing_methods", "consequence": "share_knowledge"},
+				{"text": "May the spirits protect you", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		}
+	]
+
+func setup_dr_ahmad_dialogue():
+	"""Dr. Ahmad - Climate scientist studying global impacts"""
+	dialogue_data = [
+		{
+			"id": "greeting",
+			"message": "Hello! I'm Dr. Ahmad, a climate scientist studying the global impact of volcanic eruptions. The 1815 Tambora eruption created the 'Year Without Summer' in 1816, affecting the entire world. It's fascinating how a single volcanic event can change global climate patterns for years.",
+			"options": [
+				{"text": "Explain the 'Year Without Summer'", "next_dialogue": "year_without_summer", "consequence": "share_knowledge"},
+				{"text": "What was the global climate impact?", "next_dialogue": "global_climate_effects", "consequence": "share_knowledge"},
+				{"text": "How did it affect art and literature?", "next_dialogue": "cultural_impact", "consequence": "share_knowledge"},
+				{"text": "Goodbye", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "year_without_summer",
+			"message": "The eruption ejected material high into the stratosphere, forming sulfate aerosols that spread around the Earth. This caused global temperatures to drop dramatically. In 1816, there was no summer in many parts of the world. Crops failed, animals couldn't find food, and famine spread across continents. The climate disruption lasted for years. In many parts of Asia, seasonal rainfall decreased, causing droughts. Conversely, in Europe, heavy rains that wouldn't stop destroyed harvests in many regions. Famine arose, followed by disease and economic crisis.",
+			"dialogue_type": "long",
+			"audio_file": "res://Assets/Audio/Dialog/dr_ahmad_year_without_summer.wav",
+			"audio_duration": 50.0,
+			"options": [
+				{"text": "What was the global climate impact?", "next_dialogue": "global_climate_effects", "consequence": "share_knowledge"},
+				{"text": "How did it affect art and literature?", "next_dialogue": "cultural_impact", "consequence": "share_knowledge"},
+				{"text": "Thank you for the explanation", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "global_climate_effects",
+			"message": "The global impact was catastrophic. Climate records show that air temperatures dropped drastically after the eruption. This became a disaster for agricultural companies at that time. The global temperature drop was real. When the eruption reached the stratosphere, it formed sulfate aerosols that were carried by Earth's rotation. As a result, temperatures below became cold, making it difficult for plants to survive and for animals to find food.",
+			"dialogue_type": "long",
+			"audio_file": "res://Assets/Audio/Dialog/dr_ahmad_global_climate_effects.wav",
+			"audio_duration": 42.0,
+			"options": [
+				{"text": "Explain the 'Year Without Summer'", "next_dialogue": "year_without_summer", "consequence": "share_knowledge"},
+				{"text": "How did it affect art and literature?", "next_dialogue": "cultural_impact", "consequence": "share_knowledge"},
+				{"text": "Fascinating climate science", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "cultural_impact",
+			"message": "Interestingly, this disaster also inspired great creativity. That crisis year was also recorded in the history of art and literature. Several novels with horror themes were born at that time. The most popular example is the monster story Frankenstein by Mary Shelley. In the world of fine art, faded light and cold darkness were reflected in several paintings by Caspar David Friedrich. Disaster and creativity combined to produce great works.",
+			"dialogue_type": "long",
+			"audio_file": "res://Assets/Audio/Dialog/dr_ahmad_cultural_impact.wav",
+			"audio_duration": 35.0,
+			"options": [
+				{"text": "Explain the 'Year Without Summer'", "next_dialogue": "year_without_summer", "consequence": "share_knowledge"},
+				{"text": "What was the global climate impact?", "next_dialogue": "global_climate_effects", "consequence": "share_knowledge"},
+				{"text": "Thank you for the cultural insights", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		}
+	]
+
+func setup_pak_karsa_dialogue():
+	"""Pak Karsa - Mountain guide with practical climbing knowledge"""
+	dialogue_data = [
+		{
+			"id": "greeting",
+			"message": "Welcome to Mount Tambora! I'm Pak Karsa, your mountain guide. Climbing to the crater requires two days of careful preparation. This mountain demands respect - it may look peaceful now, but it has tremendous power hidden beneath its surface.",
+			"options": [
+				{"text": "What's the climbing route like?", "next_dialogue": "climbing_routes", "consequence": "share_knowledge"},
+				{"text": "What safety precautions should I take?", "next_dialogue": "safety_protocols", "consequence": "share_knowledge"},
+				{"text": "Tell me about the crater", "next_dialogue": "crater_information", "consequence": "share_knowledge"},
+				{"text": "Goodbye", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "climbing_routes",
+			"message": "The journey to Tambora's crater is challenging but rewarding. We start from the national park area and ascend through different vegetation zones. The caldera formed during the 1815 eruption is now our destination. The climb takes two days - we camp overnight to acclimatize and enjoy the sunrise from this magnificent volcano. The mountain is now a national park, and climbing to the crater requires proper preparation and respect for the mountain's power.",
+			"dialogue_type": "long",
+			"audio_file": "res://Assets/Audio/Dialog/pak_karsa_climbing_routes.wav",
+			"audio_duration": 40.0,
+			"options": [
+				{"text": "What safety precautions should I take?", "next_dialogue": "safety_protocols", "consequence": "share_knowledge"},
+				{"text": "Tell me about the crater", "next_dialogue": "crater_information", "consequence": "share_knowledge"},
+				{"text": "Thank you for the route information", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "safety_protocols",
+			"message": "Safety is paramount when climbing Tambora. We monitor seismic activity and weather conditions constantly. Each climber must carry emergency supplies, proper clothing for temperature changes, and communication devices. The mountain can be unpredictable, so we always have evacuation plans ready. Respect the mountain, and it will respect you. The mountain spirits are powerful, and we must show proper respect. Many people come to traditional healers like Ibu Maya for blessings before climbing.",
+			"dialogue_type": "long",
+			"audio_file": "res://Assets/Audio/Dialog/pak_karsa_safety_protocols.wav",
+			"audio_duration": 45.0,
+			"options": [
+				{"text": "What's the climbing route like?", "next_dialogue": "climbing_routes", "consequence": "share_knowledge"},
+				{"text": "Tell me about the crater", "next_dialogue": "crater_information", "consequence": "share_knowledge"},
+				{"text": "I'll follow your safety advice", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		},
+		{
+			"id": "crater_information",
+			"message": "The crater is immense - evidence of the tremendous power unleashed in 1815. It's about 6 kilometers wide and 1,100 meters deep. The caldera was formed when the mountain collapsed after ejecting massive amounts of material. Today, it's a place of both beauty and solemn respect. The crater reminds us of the mountain's power and the importance of living in harmony with nature.",
+			"options": [
+				{"text": "What's the climbing route like?", "next_dialogue": "climbing_routes", "consequence": "share_knowledge"},
+				{"text": "What safety precautions should I take?", "next_dialogue": "safety_protocols", "consequence": "share_knowledge"},
+				{"text": "Thank you for the crater information", "next_dialogue": "", "consequence": "end_conversation"}
+			]
+		}
+	]
+
 func setup_default_dialogue():
 	# Set up default dialogue based on NPC type and region
 	match npc_type:
@@ -1715,6 +2037,62 @@ func get_initial_dialogue() -> Dictionary:
 		update_quest_dialogue_options()
 		return initial
 	return {}
+
+# New method to load dialogue from resource
+func load_dialogue_from_resource():
+	"""Load dialogue data from DialogueResource"""
+	print("DEBUG: load_dialogue_from_resource() called for NPC: ", npc_name)
+	
+	if not dialogue_resource:
+		print("DEBUG: WARNING - No dialogue resource assigned to ", npc_name)
+		return
+	
+	print("DEBUG: Loading dialogue from resource for ", npc_name)
+	print("DEBUG: Resource type: ", dialogue_resource.get_class())
+	
+	# Clear existing dialogue data
+	dialogue_data.clear()
+	
+	# Convert resource data directly to dialogue_data format
+	var dialogue_nodes = dialogue_resource.get("dialogue_nodes")
+	if not dialogue_nodes:
+		dialogue_nodes = []
+	print("DEBUG: Found ", str(dialogue_nodes.size()), " dialogue nodes in resource")
+	
+	for node in dialogue_nodes:
+		var dialogue_dict = {
+			"id": node.get("node_id") if node.get("node_id") else "",
+			"message": node.get("message") if node.get("message") else "",
+			"options": []
+		}
+		
+		# Add dialogue type and audio info if available
+		var dialogue_type = node.get("dialogue_type")
+		if dialogue_type == "long":
+			dialogue_dict["dialogue_type"] = "long"
+			dialogue_dict["audio_file"] = node.get("audio_file") if node.get("audio_file") else ""
+			dialogue_dict["audio_duration"] = node.get("audio_duration") if node.get("audio_duration") else 0.0
+		
+		var options = node.get("dialogue_options")
+		if not options:
+			options = []
+		for option in options:
+			var is_available = option.get("is_available")
+			if is_available == null or is_available == true:
+				var option_dict = {
+					"text": option.get("option_text") if option.get("option_text") else "",
+					"next_dialogue": option.get("next_dialogue_id") if option.get("next_dialogue_id") else "",
+					"consequence": option.get("consequence") if option.get("consequence") else ""
+				}
+				dialogue_dict.options.append(option_dict)
+		
+		dialogue_data.append(dialogue_dict)
+	
+	# Update quest dialogue based on completion status
+	update_quest_dialogue_options()
+	
+	print("DEBUG: Loaded ", str(dialogue_data.size()), " dialogue nodes from resource for ", npc_name)
+
 
 func update_quest_dialogue_options():
 	"""Update dialogue options based on quest completion status"""

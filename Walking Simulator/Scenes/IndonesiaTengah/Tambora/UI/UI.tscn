@@ -1,0 +1,117 @@
+[gd_scene load_steps=2 format=3 uid="uid://cnd4d4qbv5mxx"]
+
+[ext_resource type="Script" uid="uid://dj2jvj2b7t8fh" path="res://Tests/Experimental_Papua_Scenes/Performance_Testing/PapuaScene_FPSDisplay.gd" id="1_6u2ea"]
+
+[node name="UI" type="CanvasLayer"]
+
+[node name="CulturalInfoPanel" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="NPCDialogueUI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SimpleRadarSystem" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TerrainControls" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="InventorySystem" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DebugUI" type="CanvasLayer" parent="."]
+
+[node name="MovementDebug" type="Label" parent="DebugUI"]
+visible = false
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -100.0
+offset_right = 400.0
+offset_bottom = -20.0
+grow_vertical = 0
+text = "🎮 Controls:
+WASD - Move
+Mouse - Look around
+M - Toggle mouse mode
+Shift - Run
+Space - Jump
+ESC - Exit
+
+🌍 Terrain3D System Active
+F - Test Forest Generation
+C - Clear Assets
+T - Show Terrain Info
+R - Regenerate Terrain
+
+🏔️ Terrain Generation:
+1 - Basic Noise Terrain
+2 - Complex Multi-Layer
+3 - Hand-Painted Style
+4 - From Image File
+
+🔷 Path System:
+5 - Hexagonal Path System
+   (Artifacts & NPCs at vertices)
+
+🔄 Terrain3D Controls:
+6 - Place Demo Rock Assets
+7 - Force Reload Terrain3D Data
+8 - Create Mountain Borders
+9 - Show Terrain3D Region Info
+
+Assets will snap to terrain height"
+vertical_alignment = 1
+
+[node name="FPSDisplay" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -200.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 60.0
+grow_horizontal = 0
+script = ExtResource("1_6u2ea")
+
+[node name="FPSLabel" type="Label" parent="FPSDisplay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "FPS: --"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="FPSUpdateTimer" type="Timer" parent="FPSDisplay"]
+wait_time = 0.5
+autostart = true

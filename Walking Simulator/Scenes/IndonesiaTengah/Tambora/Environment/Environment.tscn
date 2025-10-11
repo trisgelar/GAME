@@ -1,0 +1,155 @@
+[gd_scene load_steps=24 format=3 uid="uid://cmrtaq0evcrv8"]
+
+[ext_resource type="Shader" uid="uid://c0mpv4kp06rit" path="res://Assets/Sketchfab/cloud/cloud_cellshaded.gdshader" id="1_fsmc4"]
+[ext_resource type="CompositorEffect" uid="uid://ykv5ulabgxkl" path="res://NewCloudsGD.tres" id="1_p0t6k"]
+[ext_resource type="Texture2D" uid="uid://dbqp5r3cgbvu3" path="res://Assets/Sketchfab/cloud/T_Noise_001R.png" id="2_uhbsr"]
+[ext_resource type="ArrayMesh" uid="uid://bam2033tv8to7" path="res://Assets/Sketchfab/cloud/sm_cloud.obj" id="3_wbjhm"]
+[ext_resource type="Script" path="res://addons/SunshineClouds2/SunshineCloudsDriver.gd" id="4_6nddp"]
+[ext_resource type="Texture2D" uid="uid://cupnl237utgpy" path="res://Assets/Sketchfab/T_smoke_flipbook.png" id="6_5fwie"]
+
+[sub_resource type="Environment" id="Environment_0fq24"]
+background_mode = 1
+background_color = Color(0.5, 0.7, 1, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.416639, 0.546957, 0.701236, 1)
+ambient_light_energy = 0.4
+glow_enabled = true
+fog_density = 0.001
+
+[sub_resource type="Compositor" id="Compositor_31t8c"]
+compositor_effects = Array[CompositorEffect]([ExtResource("1_p0t6k")])
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p0t6k"]
+transparency = 1
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("6_5fwie")
+billboard_mode = 3
+billboard_keep_scale = true
+particles_anim_h_frames = 8
+particles_anim_v_frames = 8
+particles_anim_loop = false
+
+[sub_resource type="Gradient" id="Gradient_vi5at"]
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_31t8c"]
+gradient = SubResource("Gradient_vi5at")
+use_hdr = true
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_14q4k"]
+particle_flag_rotate_y = true
+emission_shape = 1
+emission_sphere_radius = 0.1
+angle_min = -180.0
+angle_max = 180.0
+direction = Vector3(0, 2, 0)
+spread = 0.0
+initial_velocity_max = 50.0
+angular_velocity_min = -50.0
+angular_velocity_max = 50.0
+gravity = Vector3(0, 0, 0)
+scale_min = 200.0
+scale_max = 500.0
+color = Color(1.4, 1.4, 1.4, 1)
+color_ramp = SubResource("GradientTexture1D_31t8c")
+anim_speed_min = 1.0
+anim_speed_max = 1.0
+
+[sub_resource type="QuadMesh" id="QuadMesh_fe2xg"]
+
+[sub_resource type="Gradient" id="Gradient_pc8jo"]
+interpolation_mode = 1
+offsets = PackedFloat32Array(0, 0.529915, 1)
+colors = PackedColorArray(0, 0, 0, 1, 0.534188, 0.534188, 0.534188, 1, 1, 1, 1, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_tltgb"]
+gradient = SubResource("Gradient_pc8jo")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_svasi"]
+render_priority = 0
+shader = ExtResource("1_fsmc4")
+shader_parameter/Texture_Scale = Vector2(0.5, 0.5)
+shader_parameter/Disolver_Texture = ExtResource("2_uhbsr")
+shader_parameter/Light_attenuation = 2.1
+shader_parameter/Shadow_roundness = 0.5
+shader_parameter/Color_1D_Gradient = SubResource("GradientTexture1D_tltgb")
+
+[sub_resource type="Curve" id="Curve_l6vd4"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.99537, 0.977528), 2.78652, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_lho4g"]
+texture_mode = 1
+curve = SubResource("Curve_l6vd4")
+
+[sub_resource type="Gradient" id="Gradient_uqbs0"]
+offsets = PackedFloat32Array(0, 0.00900901, 1)
+colors = PackedColorArray(1, 1, 1, 1, 0.642105, 0.642105, 0.642105, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_pc8jo"]
+gradient = SubResource("Gradient_uqbs0")
+
+[sub_resource type="Curve" id="Curve_tltgb"]
+_data = [Vector2(0, 0.292135), 0.0, 0.0, 0, 0, Vector2(1, 0.775281), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_yg4p1"]
+curve = SubResource("Curve_tltgb")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_44jy6"]
+particle_flag_rotate_y = true
+emission_shape = 1
+emission_sphere_radius = 0.5
+angle_min = -180.0
+angle_max = 180.0
+direction = Vector3(-0.3, 1, 0)
+spread = 0.0
+initial_velocity_min = 3.0
+initial_velocity_max = 4.0
+gravity = Vector3(0, 0, 0)
+scale_min = 150.0
+scale_max = 150.0
+scale_curve = SubResource("CurveTexture_yg4p1")
+color_ramp = SubResource("GradientTexture1D_pc8jo")
+alpha_curve = SubResource("CurveTexture_lho4g")
+collision_mode = 1
+collision_friction = 0.0
+collision_bounce = 0.62
+
+[node name="Environment" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_0fq24")
+compositor = SubResource("Compositor_31t8c")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866026, -2.06477e-07, -0.5, 0.25, 0.866025, 0.433013, 0.433012, -0.5, 0.75, 0, 15, 0)
+light_color = Color(1, 0.9, 0.7, 1)
+light_energy = 1.3
+shadow_enabled = true
+
+[node name="Smoke1" type="GPUParticles3D" parent="."]
+transform = Transform3D(6.41727, 0, 0, 0, 6.41727, 0, 0, 0, 6.41727, 504.711, 342.846, 1073.88)
+material_override = SubResource("StandardMaterial3D_p0t6k")
+amount = 20
+lifetime = 2.0
+fixed_fps = 60
+process_material = SubResource("ParticleProcessMaterial_14q4k")
+draw_pass_1 = SubResource("QuadMesh_fe2xg")
+
+[node name="SunshineCloudsDriverGD" type="Node" parent="." node_paths=PackedStringArray("tracked_directional_lights")]
+script = ExtResource("4_6nddp")
+update_continuously = true
+clouds_resource = ExtResource("1_p0t6k")
+ambience_sample_environment = SubResource("Environment_0fq24")
+use_enviornment_ambience_for_fog = true
+tracked_directional_lights = [NodePath("../DirectionalLight3D")]
+tracked_directional_light_shadow_steps = Array[int]([12])
+
+[node name="Cloud" type="GPUParticles3D" parent="."]
+transform = Transform3D(57.2785, 0, 0, 0, 133.261, 0, 0, 0, 27.3154, 519.748, 355.748, 1062.91)
+material_override = SubResource("ShaderMaterial_svasi")
+amount = 20
+speed_scale = 0.3
+fixed_fps = 60
+process_material = SubResource("ParticleProcessMaterial_44jy6")
+draw_pass_1 = ExtResource("3_wbjhm")

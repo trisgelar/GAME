@@ -1,0 +1,60 @@
+[gd_scene load_steps=7 format=3 uid="uid://brbnr1g4wtarl"]
+
+[ext_resource type="Script" uid="uid://dqlmkipeygx7s" path="res://Systems/Items/WorldCulturalItem.gd" id="1_mdbax"]
+[ext_resource type="PackedScene" uid="uid://bjhclk2v07sqj" path="res://Assets/Hunyuan/Globe.fbx" id="2_xg554"]
+[ext_resource type="PackedScene" uid="uid://yv78v1q2kgx8" path="res://Assets/Hunyuan/historical_document.fbx" id="3_75mfs"]
+[ext_resource type="PackedScene" uid="uid://jsw44ymigfiv" path="res://Assets/Hunyuan/Porcelain.fbx" id="4_jyq2u"]
+[ext_resource type="PackedScene" uid="uid://5xopvaldw674" path="res://Assets/Hunyuan/tambora_rock.fbx" id="5_difw5"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tltgb"]
+albedo_color = Color(0.3, 0.3, 0.3, 1)
+
+[node name="CulturalArtifacts" type="Node3D"]
+
+[node name="TamboraRockSample" type="CSGCylinder3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.5, -12)
+radius = 0.4
+height = 0.3
+material = SubResource("StandardMaterial3D_tltgb")
+script = ExtResource("1_mdbax")
+item_name = "TamboraRockSample"
+cultural_region = "Indonesia Tengah"
+
+[node name="HistoricalDocument" type="CSGCylinder3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.5, -12)
+radius = 0.4
+height = 0.3
+material = SubResource("StandardMaterial3D_tltgb")
+script = ExtResource("1_mdbax")
+item_name = "HistoricalDocument"
+cultural_region = "Indonesia Tengah"
+
+[node name="EruptionTimeline" type="CSGCylinder3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.5, -5)
+radius = 0.4
+height = 0.3
+material = SubResource("StandardMaterial3D_tltgb")
+script = ExtResource("1_mdbax")
+item_name = "EruptionTimeline"
+cultural_region = "Indonesia Tengah"
+
+[node name="ClimateImpact" type="CSGCylinder3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.5, -5)
+radius = 0.4
+height = 0.3
+material = SubResource("StandardMaterial3D_tltgb")
+script = ExtResource("1_mdbax")
+item_name = "ClimateImpact"
+cultural_region = "Indonesia Tengah"
+
+[node name="Globe" parent="." instance=ExtResource("2_xg554")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.88385, 1.39132, 0)
+
+[node name="historical_document" parent="." instance=ExtResource("3_75mfs")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.84702, 1.34376, 0)
+
+[node name="Porcelain" parent="." instance=ExtResource("4_jyq2u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.25601, 1.72464, 0)
+
+[node name="tambora_rock" parent="." instance=ExtResource("5_difw5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.31907, 1.82836, 0)

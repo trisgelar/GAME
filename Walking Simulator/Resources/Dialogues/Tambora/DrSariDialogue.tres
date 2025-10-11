@@ -1,0 +1,103 @@
+[gd_resource type="DialogueResource" format=3 uid="uid://dhwany3vxht17"]
+
+[resource]
+resource_local_to_scene = false
+resource_name = ""
+dialogue_id = "dr_sari_tambora"
+npc_name = "Dr. Sari"
+dialogue_type = "historian"
+cultural_region = "Indonesia Tengah"
+dialogue_nodes = [{
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "current_monitoring",
+"option_text": "Tell me about Tambora's current activity"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "vei7_significance",
+"option_text": "What makes the 1815 eruption so significant?"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "future_eruption",
+"option_text": "Could Tambora erupt again?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Goodbye"
+}],
+"dialogue_type": "short",
+"message": "Hello! I'm Dr. Sari, an Indonesian volcanologist monitoring Mount Tambora. This volcano is now under constant surveillance. We have seismographs, telescopes, wind direction measurements, and thermocouples monitoring fumaroles and solfataras. Science has come a long way since 1815!",
+"node_id": "greeting",
+"speaker": "Dr. Sari"
+}, {
+"audio_duration": 35.0,
+"audio_file": "res://Assets/Audio/Dialog/dr_sari_current_monitoring.wav",
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "vei7_significance",
+"option_text": "What makes the 1815 eruption so significant?"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "future_eruption",
+"option_text": "Could Tambora erupt again?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Thank you for the information"
+}],
+"dialogue_type": "long",
+"message": "Mount Tambora is now under comprehensive monitoring. In recent decades, we've recorded stronger seismic phases and increased volcanic steam from fumaroles. Across Indonesia, we monitor 127 active volcanoes, with 70-80% having observation posts. Some volcanoes are even monitored by three different posts, each equipped with seismographs, telescopes, wind direction measurements, and thermocouples to monitor fumaroles and solfataras.",
+"node_id": "current_monitoring",
+"speaker": "Dr. Sari"
+}, {
+"audio_duration": 48.0,
+"audio_file": "res://Assets/Audio/Dialog/dr_sari_vei7_significance.wav",
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "current_monitoring",
+"option_text": "Tell me about current monitoring"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "future_eruption",
+"option_text": "Could Tambora erupt again?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Fascinating scientific data"
+}],
+"dialogue_type": "long",
+"message": "The 1815 Tambora eruption was a VEI 7 event - the most powerful volcanic eruption in recorded history. It released 400 times more energy than the largest nuclear bomb ever detonated. The mountain was 4,300 meters high before the eruption - now it's only about 2,800 meters. The eruption ejected 140 billion tons of ash and dust halfway to space, creating a 'Year Without Summer' in 1816. This was a super-colossal eruption that defined the millennium.",
+"node_id": "vei7_significance",
+"speaker": "Dr. Sari"
+}, {
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "current_monitoring",
+"option_text": "Tell me about current monitoring"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "vei7_significance",
+"option_text": "What makes the 1815 eruption so significant?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Thank you for the scientific insights"
+}],
+"dialogue_type": "short",
+"message": "Yes, Tambora could potentially erupt again. In recent years, we've recorded stronger seismic phases and increased volcanic activity. However, with our advanced monitoring systems, we can provide early warnings that could save thousands of lives. We watch for slow changes in magma reservoirs, like ground swelling and temperature increases, to detect potential eruptions before they happen.",
+"node_id": "future_eruption",
+"speaker": "Dr. Sari"
+}]

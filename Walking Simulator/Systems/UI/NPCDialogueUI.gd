@@ -12,6 +12,10 @@ var current_dialogue: Dictionary
 var dialogue_options: Array = []  # Changed from Array[Dictionary] to Array to avoid type mismatch
 var current_dialogue_id: String = ""
 
+# Navigation state
+var selected_option_index: int = 0
+var option_buttons: Array[Button] = []
+
 func _on_component_ready():
 	# Hide dialogue panel initially
 	dialogue_panel.visible = false
@@ -36,8 +40,20 @@ func _on_component_input(event):
 		GameLogger.debug("DialogueUI input received")
 
 	var handled := false
-	# Handle dialogue choice keys
-	if event.is_action_pressed("dialogue_choice_1") and dialogue_options.size() > 0:
+	
+	# Handle navigation controls
+	if event.is_action_pressed("dialogue_up"):
+		navigate_up()
+		handled = true
+	elif event.is_action_pressed("dialogue_down"):
+		navigate_down()
+		handled = true
+	elif event.is_action_pressed("dialogue_select"):
+		select_dialogue_option(selected_option_index)
+		handled = true
+	
+	# Handle direct number keys (1-4)
+	elif event.is_action_pressed("dialogue_choice_1") and dialogue_options.size() > 0:
 		select_dialogue_option(0)
 		handled = true
 	elif event.is_action_pressed("dialogue_choice_2") and dialogue_options.size() > 1:
@@ -64,6 +80,34 @@ func select_dialogue_option(option_index: int):
 	if option_index >= 0 and option_index < dialogue_options.size():
 		var option = dialogue_options[option_index]
 		_on_option_selected(option)
+
+func navigate_up():
+	if dialogue_options.size() > 0:
+		selected_option_index = (selected_option_index - 1) % dialogue_options.size()
+		update_option_highlight()
+
+func navigate_down():
+	if dialogue_options.size() > 0:
+		selected_option_index = (selected_option_index + 1) % dialogue_options.size()
+		update_option_highlight()
+
+func update_option_highlight():
+	# Reset all button styles
+	for i in range(option_buttons.size()):
+		var button = option_buttons[i]
+		if button:
+			button.modulate = Color.WHITE
+			button.add_theme_color_override("font_color", Color.WHITE)
+	
+	# Highlight selected option
+	if selected_option_index < option_buttons.size() and selected_option_index < dialogue_options.size():
+		var selected_button = option_buttons[selected_option_index]
+		if selected_button:
+			selected_button.modulate = Color.YELLOW
+			selected_button.add_theme_color_override("font_color", Color.YELLOW)
+			# Add a subtle glow effect
+			selected_button.add_theme_constant_override("border_width", 2)
+			selected_button.add_theme_color_override("border_color", Color.YELLOW)
 
 func advance_dialogue():
 	# Advance to next dialogue or end conversation
@@ -146,7 +190,7 @@ func add_keyboard_controls_indicator():
 	if not controls_label:
 		controls_label = Label.new()
 		controls_label.name = "KeyboardControls"
-		controls_label.text = "Controls: [1-4] Choose option, [Enter] Continue, [Esc] Cancel"
+		controls_label.text = "Controls: [↑↓] Navigate, [Space] Select, [1-4] Direct, [Enter] Continue, [Esc] Cancel"
 		controls_label.add_theme_color_override("font_color", Color.YELLOW)
 		controls_label.add_theme_font_size_override("font_size", 12)
 		dialogue_panel.add_child(controls_label)
@@ -192,8 +236,10 @@ func clear_options():
 		if child != close_button:
 			child.queue_free()
 	
-	# Clear stored options
+	# Clear stored options and buttons
 	dialogue_options = []
+	option_buttons.clear()
+	selected_option_index = 0
 
 func add_dialogue_option(option: Dictionary, option_number: int = 0):
 	var button = Button.new()
@@ -210,7 +256,13 @@ func add_dialogue_option(option: Dictionary, option_number: int = 0):
 	# Connect button press
 	button.pressed.connect(_on_option_selected.bind(option))
 	
+	# Add to options container and button array
 	options_container.add_child(button)
+	option_buttons.append(button)
+	
+	# Update highlight after adding all options
+	if option_number == dialogue_options.size():
+		update_option_highlight()
 
 func _on_option_selected(option: Dictionary):
 	var consequence = option.get("consequence", "")
@@ -252,6 +304,8 @@ func hide_dialogue():
 	current_npc = null
 	current_dialogue_id = ""
 	current_dialogue = {}
+	selected_option_index = 0
+	option_buttons.clear()
 	GameLogger.debug("Dialogue hidden - panel visible now: " + str(dialogue_panel.visible))
 
 func _on_close_button_pressed():

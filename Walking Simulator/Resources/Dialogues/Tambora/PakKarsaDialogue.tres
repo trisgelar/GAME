@@ -1,0 +1,103 @@
+[gd_resource type="DialogueResource" format=3 uid="uid://dy41vqsrydj8h"]
+
+[resource]
+resource_local_to_scene = false
+resource_name = ""
+dialogue_id = "pak_karsa_tambora"
+npc_name = "Pak Karsa"
+dialogue_type = "guide"
+cultural_region = "Indonesia Tengah"
+dialogue_nodes = [{
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "climbing_routes",
+"option_text": "What's the climbing route like?"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "safety_protocols",
+"option_text": "What safety precautions should I take?"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "crater_information",
+"option_text": "Tell me about the crater"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Goodbye"
+}],
+"dialogue_type": "short",
+"message": "Welcome to Mount Tambora! I'm Pak Karsa, your mountain guide. Climbing to the crater requires two days of careful preparation. This mountain demands respect - it may look peaceful now, but it has tremendous power hidden beneath its surface.",
+"node_id": "greeting",
+"speaker": "Pak Karsa"
+}, {
+"audio_duration": 40.0,
+"audio_file": "res://Assets/Audio/Dialog/pak_karsa_climbing_routes.wav",
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "safety_protocols",
+"option_text": "What safety precautions should I take?"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "crater_information",
+"option_text": "Tell me about the crater"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Thank you for the route information"
+}],
+"dialogue_type": "long",
+"message": "The journey to Tambora's crater is challenging but rewarding. We start from the national park area and ascend through different vegetation zones. The caldera formed during the 1815 eruption is now our destination. The climb takes two days - we camp overnight to acclimatize and enjoy the sunrise from this magnificent volcano. The mountain is now a national park, and climbing to the crater requires proper preparation and respect for the mountain's power.",
+"node_id": "climbing_routes",
+"speaker": "Pak Karsa"
+}, {
+"audio_duration": 45.0,
+"audio_file": "res://Assets/Audio/Dialog/pak_karsa_safety_protocols.wav",
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "climbing_routes",
+"option_text": "What's the climbing route like?"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "crater_information",
+"option_text": "Tell me about the crater"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "I'll follow your safety advice"
+}],
+"dialogue_type": "long",
+"message": "Safety is paramount when climbing Tambora. We monitor seismic activity and weather conditions constantly. Each climber must carry emergency supplies, proper clothing for temperature changes, and communication devices. The mountain can be unpredictable, so we always have evacuation plans ready. Respect the mountain, and it will respect you. The mountain spirits are powerful, and we must show proper respect. Many people come to traditional healers like Ibu Maya for blessings before climbing.",
+"node_id": "safety_protocols",
+"speaker": "Pak Karsa"
+}, {
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "climbing_routes",
+"option_text": "What's the climbing route like?"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "safety_protocols",
+"option_text": "What safety precautions should I take?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Thank you for the crater information"
+}],
+"dialogue_type": "short",
+"message": "The crater is immense - evidence of the tremendous power unleashed in 1815. It's about 6 kilometers wide and 1,100 meters deep. The caldera was formed when the mountain collapsed after ejecting massive amounts of material. Today, it's a place of both beauty and solemn respect. The crater reminds us of the mountain's power and the importance of living in harmony with nature.",
+"node_id": "crater_information",
+"speaker": "Pak Karsa"
+}]

@@ -1,0 +1,105 @@
+[gd_resource type="DialogueResource" format=3 uid="uid://cufwqmehpkynn"]
+
+[resource]
+resource_local_to_scene = false
+resource_name = ""
+dialogue_id = "dr_ahmad_tambora"
+npc_name = "Dr. Ahmad"
+dialogue_type = "historian"
+cultural_region = "Indonesia Tengah"
+dialogue_nodes = [{
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "year_without_summer",
+"option_text": "Explain the 'Year Without Summer'"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "global_climate_effects",
+"option_text": "What was the global climate impact?"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "cultural_impact",
+"option_text": "How did it affect art and literature?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Goodbye"
+}],
+"dialogue_type": "short",
+"message": "Hello! I'm Dr. Ahmad, a climate scientist studying the global impact of volcanic eruptions. The 1815 Tambora eruption created the 'Year Without Summer' in 1816, affecting the entire world. It's fascinating how a single volcanic event can change global climate patterns for years.",
+"node_id": "greeting",
+"speaker": "Dr. Ahmad"
+}, {
+"audio_duration": 50.0,
+"audio_file": "res://Assets/Audio/Dialog/dr_ahmad_year_without_summer.wav",
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "global_climate_effects",
+"option_text": "What was the global climate impact?"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "cultural_impact",
+"option_text": "How did it affect art and literature?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Thank you for the explanation"
+}],
+"dialogue_type": "long",
+"message": "The eruption ejected material high into the stratosphere, forming sulfate aerosols that spread around the Earth. This caused global temperatures to drop dramatically. In 1816, there was no summer in many parts of the world. Crops failed, animals couldn't find food, and famine spread across continents. The climate disruption lasted for years. In many parts of Asia, seasonal rainfall decreased, causing droughts. Conversely, in Europe, heavy rains that wouldn't stop destroyed harvests in many regions. Famine arose, followed by disease and economic crisis.",
+"node_id": "year_without_summer",
+"speaker": "Dr. Ahmad"
+}, {
+"audio_duration": 42.0,
+"audio_file": "res://Assets/Audio/Dialog/dr_ahmad_global_climate_effects.wav",
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "year_without_summer",
+"option_text": "Explain the 'Year Without Summer'"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "cultural_impact",
+"option_text": "How did it affect art and literature?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Fascinating climate science"
+}],
+"dialogue_type": "long",
+"message": "The global impact was catastrophic. Climate records show that air temperatures dropped drastically after the eruption. This became a disaster for agricultural companies at that time. The global temperature drop was real. When the eruption reached the stratosphere, it formed sulfate aerosols that were carried by Earth's rotation. As a result, temperatures below became cold, making it difficult for plants to survive and for animals to find food.",
+"node_id": "global_climate_effects",
+"speaker": "Dr. Ahmad"
+}, {
+"audio_duration": 35.0,
+"audio_file": "res://Assets/Audio/Dialog/dr_ahmad_cultural_impact.wav",
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "year_without_summer",
+"option_text": "Explain the 'Year Without Summer'"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "global_climate_effects",
+"option_text": "What was the global climate impact?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Thank you for the cultural insights"
+}],
+"dialogue_type": "long",
+"message": "Interestingly, this disaster also inspired great creativity. That crisis year was also recorded in the history of art and literature. Several novels with horror themes were born at that time. The most popular example is the monster story Frankenstein by Mary Shelley. In the world of fine art, faded light and cold darkness were reflected in several paintings by Caspar David Friedrich. Disaster and creativity combined to produce great works.",
+"node_id": "cultural_impact",
+"speaker": "Dr. Ahmad"
+}]

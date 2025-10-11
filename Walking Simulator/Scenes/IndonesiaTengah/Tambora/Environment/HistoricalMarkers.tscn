@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3 uid="uid://bv6441ilhepao"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pc8jo"]
+albedo_color = Color(0.8, 0.2, 0.2, 1)
+
+[node name="HistoricalMarkers" type="Node3D"]
+
+[node name="Marker1" type="CSGCylinder3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -15)
+material = SubResource("StandardMaterial3D_pc8jo")
+
+[node name="Marker2" type="CSGCylinder3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -8)
+material = SubResource("StandardMaterial3D_pc8jo")
+
+[node name="Marker3" type="CSGCylinder3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, -2)
+material = SubResource("StandardMaterial3D_pc8jo")

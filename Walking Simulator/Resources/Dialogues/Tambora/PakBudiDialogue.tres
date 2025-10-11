@@ -1,0 +1,103 @@
+[gd_resource type="DialogueResource" format=3 uid="uid://cwoe4sirebq7c"]
+
+[resource]
+resource_local_to_scene = false
+resource_name = ""
+dialogue_id = "pak_budi_tambora"
+npc_name = "Pak Budi"
+dialogue_type = "guide"
+cultural_region = "Indonesia Tengah"
+dialogue_nodes = [{
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "eruption_story",
+"option_text": "Tell me about the 1815 eruption"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "kingdom_destruction",
+"option_text": "What happened to the three kingdoms?"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "survival_stories",
+"option_text": "How did people survive?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Goodbye"
+}],
+"dialogue_type": "short",
+"message": "Selamat datang! I am Pak Budi, a Sumbawan elder. My ancestors lived through the terrible 1815 eruption. The stories have been passed down through generations. Alhamdulillah, today we can see something beautiful from what happened in 1815 long ago.",
+"node_id": "greeting",
+"speaker": "Pak Budi"
+}, {
+"audio_duration": 52.0,
+"audio_file": "res://Assets/Audio/Dialog/pak_budi_eruption_story.wav",
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "kingdom_destruction",
+"option_text": "What happened to the three kingdoms?"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "survival_stories",
+"option_text": "How did people survive?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Terima kasih for the story"
+}],
+"dialogue_type": "long",
+"message": "On April 5, 1815, the eruption began with a pillar of fire that made the night sky bright as day. The volcano erupted for seven days before finally calming. According to records, there were about 92,000 victims - approximately 40,000 died immediately. The eruption buried millions of cubic meters of material over Sumbawa Island. The devastation was unimaginable - villages were destroyed, houses collapsed and were covered with thick ash.",
+"node_id": "eruption_story",
+"speaker": "Pak Budi"
+}, {
+"audio_duration": 40.0,
+"audio_file": "res://Assets/Audio/Dialog/pak_budi_kingdom_destruction.wav",
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "eruption_story",
+"option_text": "Tell me about the 1815 eruption"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "survival_stories",
+"option_text": "How did people survive?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Terima kasih for sharing"
+}],
+"dialogue_type": "long",
+"message": "The three great kingdoms in the Tambora region were completely covered by lava flows, leaving no trace. Today, archaeologists excavating in the Kawinda area have discovered the 1815 community life - rice paddies, housing complexes, and human skeletons. Three kingdoms vanished forever under the volcanic ash. The effect of the 1815 eruption was so powerful that entire civilizations were erased from history.",
+"node_id": "kingdom_destruction",
+"speaker": "Pak Budi"
+}, {
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "eruption_story",
+"option_text": "Tell me about the 1815 eruption"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "kingdom_destruction",
+"option_text": "What happened to the three kingdoms?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Thank you for preserving these stories"
+}],
+"dialogue_type": "short",
+"message": "Those who survived had to flee to distant islands. Many families were separated forever. The survivors carried with them the trauma of witnessing such destruction. Today, their descendants still remember the stories passed down through generations. We Sumbawan people are resilient - we have learned to live with the mountain's power and respect its might.",
+"node_id": "survival_stories",
+"speaker": "Pak Budi"
+}]

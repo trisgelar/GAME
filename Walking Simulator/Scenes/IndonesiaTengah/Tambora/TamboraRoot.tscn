@@ -1,0 +1,129 @@
+[gd_scene load_steps=8 format=4 uid="uid://da1u6h0pc502g"]
+
+[ext_resource type="PackedScene" uid="uid://dfpuosyof4x6m" path="res://Scenes/IndonesiaTengah/Tambora/Player/Player.tscn" id="1_player"]
+[ext_resource type="PackedScene" uid="uid://cnd4d4qbv5mxx" path="res://Scenes/IndonesiaTengah/Tambora/UI/UI.tscn" id="2_ui"]
+# [ext_resource type="PackedScene" uid="uid://bhkb71wo2np2i" path="res://Scenes/IndonesiaTengah/Tambora/Terrain/Terrain3DManager.tscn" id="3_terrain"]
+[ext_resource type="PackedScene" uid="uid://brqeynensmxbb" path="res://Scenes/IndonesiaTengah/Tambora/Systems/SimpleCameraManager.tscn" id="3_camera_manager"]
+# [ext_resource type="PackedScene" uid="uid://b5jrqsg6si3pp" path="res://Scenes/IndonesiaTengah/Tambora/NPCs/NPCs.tscn" id="5_npcs"]
+# [ext_resource type="PackedScene" uid="uid://brbnr1g4wtarl" path="res://Scenes/IndonesiaTengah/Tambora/Artifacts/Artifacts.tscn" id="6_artifacts"]
+[ext_resource type="PackedScene" uid="uid://cmrtaq0evcrv8" path="res://Scenes/IndonesiaTengah/Tambora/Environment/Environment.tscn" id="4_environment"]
+# [ext_resource type="PackedScene" uid="uid://catt1pemwf4p" path="res://Scenes/IndonesiaTengah/Tambora/Environment/MountainPath.tscn" id="8_mountain_path"]
+# [ext_resource type="PackedScene" uid="uid://bv6441ilhepao" path="res://Scenes/IndonesiaTengah/Tambora/Environment/HistoricalMarkers.tscn" id="9_historical_markers"]
+# [ext_resource type="PackedScene" uid="uid://dnoldq1tax3cf" path="res://Scenes/IndonesiaTengah/Tambora/Environment/GridMap.tscn" id="10_gridmap"]
+[ext_resource type="PackedScene" uid="uid://c8is2r5ftgc84" path="res://Systems/Audio/CulturalAudioManager.tscn" id="5_audio_manager"]
+[ext_resource type="PackedScene" uid="uid://c8is2r5ftgc85" path="res://Systems/Inventory/CulturalInventory.tscn" id="6_inventory_manager"]
+# [ext_resource type="PackedScene" uid="uid://8oq2q5s1gc7s" path="res://Scenes/IndonesiaTengah/Tambora/Environment/Tenda.tscn" id="13_tenda"]
+[ext_resource type="PackedScene" uid="uid://bepgobn3ai06e" path="res://Assets/Models/NPC/local_guide.glb" id="7_npc_model"]
+[ext_resource type="Script" uid="uid://cb82diggp6ccs" path="res://Systems/NPCs/CulturalNPC.gd" id="8_cultural_npc"]
+[ext_resource type="Script" uid="uid://cgryvux04l2la" path="res://Scenes/RegionSceneController.gd" id="9_region_controller"]
+# Dialogue resources removed - using manual dialogue system now
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_interaction"]
+radius = 3.0
+
+[node name="TamboraRoot" type="Node3D"]
+script = ExtResource("9_region_controller")
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 248.516, 106.126, -1742.79)
+
+[node name="UI" parent="." instance=ExtResource("2_ui")]
+
+[node name="SimpleCameraManager" parent="." instance=ExtResource("3_camera_manager")]
+
+[node name="Environment" parent="." instance=ExtResource("4_environment")]
+
+# [node name="MountainPath" parent="Environment" instance=ExtResource("8_mountain_path")]
+# visible = false
+
+# [node name="HistoricalMarkers" parent="Environment" instance=ExtResource("9_historical_markers")]
+# visible = false
+
+# [node name="GridMap" parent="Environment" instance=ExtResource("10_gridmap")]
+
+# [node name="tenda1" parent="Environment" instance=ExtResource("13_tenda")]
+# transform = Transform3D(1.34391, -0.00114994, 1.48118, 0.000109959, 2, 0.00145297, -1.48118, -0.000894897, 1.34391, 258.125, 105.096, -1738.95)
+
+# [node name="TamboraAssets" parent="Environment" instance=ExtResource("14_assets")]
+# transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1771.42)
+
+[node name="AudioManager" parent="." instance=ExtResource("5_audio_manager")]
+
+[node name="InventoryManager" parent="." instance=ExtResource("6_inventory_manager")]
+
+[node name="NPCAssets" type="Node3D" parent="."]
+
+[node name="DrHeinrich" parent="NPCAssets" instance=ExtResource("7_npc_model")]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 205.334, 107.017, -1853.26)
+script = ExtResource("8_cultural_npc")
+npc_name = "Dr. Heinrich"
+cultural_region = "Indonesia Tengah"
+npc_type = "Historian"
+dialogue_resource = null
+
+[node name="InteractionArea" type="Area3D" parent="NPCAssets/DrHeinrich"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NPCAssets/DrHeinrich/InteractionArea"]
+shape = SubResource("SphereShape3D_interaction")
+
+[node name="DrSari" parent="NPCAssets" instance=ExtResource("7_npc_model")]
+transform = Transform3D(-2.69348, 0, -1.32104, 0, 3, 0, 1.32104, 0, -2.69348, 489.087, 88.697, -1882.43)
+script = ExtResource("8_cultural_npc")
+npc_name = "Dr. Sari"
+cultural_region = "Indonesia Tengah"
+npc_type = "Historian"
+dialogue_resource = null
+
+[node name="InteractionArea" type="Area3D" parent="NPCAssets/DrSari"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NPCAssets/DrSari/InteractionArea"]
+shape = SubResource("SphereShape3D_interaction")
+
+[node name="PakBudi" parent="NPCAssets" instance=ExtResource("7_npc_model")]
+transform = Transform3D(-2.99911, 0, 0.0732442, 0, 3, 0, -0.0732442, 0, -2.99911, 742.664, 89.4885, -1699.93)
+script = ExtResource("8_cultural_npc")
+npc_name = "Pak Budi"
+cultural_region = "Indonesia Tengah"
+dialogue_resource = null
+
+[node name="InteractionArea" type="Area3D" parent="NPCAssets/PakBudi"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NPCAssets/PakBudi/InteractionArea"]
+shape = SubResource("SphereShape3D_interaction")
+
+[node name="IbuMaya" parent="NPCAssets" instance=ExtResource("7_npc_model")]
+transform = Transform3D(2.0689, 0, -2.17248, 0, 3, 0, 2.17248, 0, 2.0689, 461.564, 79.3885, -349.276)
+script = ExtResource("8_cultural_npc")
+npc_name = "Ibu Maya"
+cultural_region = "Indonesia Tengah"
+dialogue_resource = null
+
+[node name="InteractionArea" type="Area3D" parent="NPCAssets/IbuMaya"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NPCAssets/IbuMaya/InteractionArea"]
+shape = SubResource("SphereShape3D_interaction")
+
+[node name="DrAhmad" parent="NPCAssets" instance=ExtResource("7_npc_model")]
+transform = Transform3D(-1.56298, 0, -2.56068, 0, 3, 0, 2.56068, 0, -1.56298, 586.564, 101.388, 356.724)
+script = ExtResource("8_cultural_npc")
+npc_name = "Dr. Ahmad"
+cultural_region = "Indonesia Tengah"
+npc_type = "Historian"
+dialogue_resource = null
+
+[node name="InteractionArea" type="Area3D" parent="NPCAssets/DrAhmad"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NPCAssets/DrAhmad/InteractionArea"]
+shape = SubResource("SphereShape3D_interaction")
+
+[node name="PakKarsa" parent="NPCAssets" instance=ExtResource("7_npc_model")]
+transform = Transform3D(0.846972, 0, 2.87796, 0, 3, 0, -2.87796, 0, 0.846972, 501.564, 101.388, -56.276)
+script = ExtResource("8_cultural_npc")
+npc_name = "Pak Karsa"
+cultural_region = "Indonesia Tengah"
+dialogue_resource = null
+
+[node name="InteractionArea" type="Area3D" parent="NPCAssets/PakKarsa"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NPCAssets/PakKarsa/InteractionArea"]
+shape = SubResource("SphereShape3D_interaction")

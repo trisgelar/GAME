@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://dnoldq1tax3cf"]
+
+[node name="GridMap" type="GridMap"]
+collision_mask = 3
+metadata/_editor_floor_ = Vector3(0, 1, 0)

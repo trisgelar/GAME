@@ -1,0 +1,103 @@
+[gd_resource type="DialogueResource" format=3 uid="uid://dnd44sb4jj4d4"]
+
+[resource]
+resource_local_to_scene = false
+resource_name = ""
+dialogue_id = "ibu_maya_tambora"
+npc_name = "Ibu Maya"
+dialogue_type = "guide"
+cultural_region = "Indonesia Tengah"
+dialogue_nodes = [{
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "spiritual_beliefs",
+"option_text": "Tell me about volcano spirits"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "healing_methods",
+"option_text": "What remedies do you use?"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "protection_rituals",
+"option_text": "How do you protect against volcanic dangers?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Goodbye"
+}],
+"dialogue_type": "short",
+"message": "Welcome, child. I am Ibu Maya, a traditional healer. In Indonesia, volcanoes have deep spiritual meaning. Mount Tambora is no exception. The mountain spirits are powerful, and we must respect them. Even today, many people come to me seeking protection and healing from volcanic influences.",
+"node_id": "greeting",
+"speaker": "Ibu Maya"
+}, {
+"audio_duration": 45.0,
+"audio_file": "res://Assets/Audio/Dialog/ibu_maya_spiritual_beliefs.wav",
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "healing_methods",
+"option_text": "What remedies do you use?"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "protection_rituals",
+"option_text": "How do you protect against volcanic dangers?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Thank you for sharing your wisdom"
+}],
+"dialogue_type": "long",
+"message": "Volcanoes are sacred places where the earth's energy meets the heavens. Tambora was known as a mysterious mountain long before Europeans came. The name 'Tambora' comes from 'Ta-Mbora' - meaning 'let us disappear.' The mountain invited people to vanish, and in 1815, it did just that. We must always show respect to these powerful spirits. When Heinrich Zollinger successfully climbed the mountain in 1847, people celebrated, believing the curse was finally lifted and the evil spirits had been expelled.",
+"node_id": "spiritual_beliefs",
+"speaker": "Ibu Maya"
+}, {
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "spiritual_beliefs",
+"option_text": "Tell me about volcano spirits"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "protection_rituals",
+"option_text": "How do you protect against volcanic dangers?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "Your healing knowledge is precious"
+}],
+"dialogue_type": "short",
+"message": "I use traditional herbs and plants that grow near the volcano. These plants have absorbed the mountain's energy and can provide protection. I create amulets from volcanic stones and use prayers to calm the restless spirits. The key is to work with the mountain's energy, not against it. Many people come to me before climbing Tambora to receive blessings and protection.",
+"node_id": "healing_methods",
+"speaker": "Ibu Maya"
+}, {
+"audio_duration": 38.0,
+"audio_file": "res://Assets/Audio/Dialog/ibu_maya_protection_rituals.wav",
+"dialogue_options": [{
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "spiritual_beliefs",
+"option_text": "Tell me about volcano spirits"
+}, {
+"consequence": "share_knowledge",
+"is_available": true,
+"next_dialogue_id": "healing_methods",
+"option_text": "What remedies do you use?"
+}, {
+"consequence": "end_conversation",
+"is_available": true,
+"next_dialogue_id": "",
+"option_text": "May the spirits protect you"
+}],
+"dialogue_type": "long",
+"message": "Before approaching the mountain, we perform rituals to honor the spirits. We offer prayers and small offerings at the base of the mountain. We wear amulets made from volcanic stones and carry blessed herbs. The most important thing is to show respect and humility. The mountain spirits can sense your intentions. If you come with respect and pure heart, they will protect you. If you come with arrogance or disrespect, they may test you with storms and dangerous weather.",
+"node_id": "protection_rituals",
+"speaker": "Ibu Maya"
+}]
