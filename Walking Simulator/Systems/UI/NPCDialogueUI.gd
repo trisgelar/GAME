@@ -16,6 +16,10 @@ var current_dialogue_id: String = ""
 var selected_option_index: int = 0
 var option_buttons: Array[Button] = []
 
+# Input debouncing to prevent rapid selection
+var last_input_time: float = 0.0
+var input_debounce_delay: float = 0.3  # 300ms delay between inputs
+
 func _on_component_ready():
 	# Hide dialogue panel initially
 	dialogue_panel.visible = false
@@ -35,13 +39,19 @@ func _on_component_input(event):
 	# Only process input when the dialogue UI is visible
 	if not visible or not dialogue_panel.visible:
 		return
+	
+	# Check input debouncing
+	var current_time = Time.get_time_dict_from_system()
+	var current_time_float = current_time.hour * 3600.0 + current_time.minute * 60.0 + current_time.second + current_time.millisecond / 1000.0
+	if current_time_float - last_input_time < input_debounce_delay:
+		return  # Ignore input if too soon after last input
 		
 	if has_node("/root/DebugConfig") and get_node("/root/DebugConfig").enable_input_debug:
 		GameLogger.debug("DialogueUI input received")
 
 	var handled := false
 	
-	# Handle navigation controls
+	# Handle navigation controls (no debouncing needed for navigation)
 	if event.is_action_pressed("dialogue_up"):
 		navigate_up()
 		handled = true
@@ -50,20 +60,25 @@ func _on_component_input(event):
 		handled = true
 	elif event.is_action_pressed("dialogue_select"):
 		select_dialogue_option(selected_option_index)
+		last_input_time = current_time_float
 		handled = true
 	
-	# Handle direct number keys (1-4)
+	# Handle direct number keys (1-4) - with debouncing
 	elif event.is_action_pressed("dialogue_choice_1") and dialogue_options.size() > 0:
 		select_dialogue_option(0)
+		last_input_time = current_time_float
 		handled = true
 	elif event.is_action_pressed("dialogue_choice_2") and dialogue_options.size() > 1:
 		select_dialogue_option(1)
+		last_input_time = current_time_float
 		handled = true
 	elif event.is_action_pressed("dialogue_choice_3") and dialogue_options.size() > 2:
 		select_dialogue_option(2)
+		last_input_time = current_time_float
 		handled = true
 	elif event.is_action_pressed("dialogue_choice_4") and dialogue_options.size() > 3:
 		select_dialogue_option(3)
+		last_input_time = current_time_float
 		handled = true
 	elif event.is_action_pressed("dialogue_continue"):
 		advance_dialogue()
@@ -79,7 +94,10 @@ func _on_component_input(event):
 func select_dialogue_option(option_index: int):
 	if option_index >= 0 and option_index < dialogue_options.size():
 		var option = dialogue_options[option_index]
+		GameLogger.debug("Selecting dialogue option: " + str(option_index) + " - " + str(option.get("text", "")))
 		_on_option_selected(option)
+	else:
+		GameLogger.warning("Invalid dialogue option index: " + str(option_index) + " (max: " + str(dialogue_options.size() - 1) + ")")
 
 func navigate_up():
 	if dialogue_options.size() > 0:

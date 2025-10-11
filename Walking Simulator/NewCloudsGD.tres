@@ -9,7 +9,7 @@
 [ext_resource type="NoiseTexture3D" uid="uid://e5kq15kynaey" path="res://addons/SunshineClouds2/NoiseTextures/MediumScaleNoise.tres" id="7_opodv"]
 [ext_resource type="RDShaderFile" uid="uid://chxheyp4eohbc" path="res://addons/SunshineClouds2/SunshineCloudsPostCompute.glsl" id="8_f8qfs"]
 [ext_resource type="RDShaderFile" uid="uid://crfpk8ta4qxsk" path="res://addons/SunshineClouds2/SunshineCloudsPreCompute.glsl" id="9_bt1pb"]
-[ext_resource type="Script" path="res://addons/SunshineClouds2/SunshineClouds.gd" id="10_jugbg"]
+[ext_resource type="Script" uid="uid://dnblgqynq1t7l" path="res://addons/SunshineClouds2/SunshineClouds.gd" id="10_jugbg"]
 [ext_resource type="NoiseTexture3D" uid="uid://d37ecidgegoxy" path="res://addons/SunshineClouds2/NoiseTextures/SmallScaleNoise.tres" id="11_jgply"]
 
 [resource]

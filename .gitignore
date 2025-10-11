@@ -22,8 +22,8 @@ export.cfg
 export_presets.cfg
 
 # Scenes never used
-*.scn
-*.tscn
+#*.scn
+#*.tscn
 
 # Packed scenes
 *.pck

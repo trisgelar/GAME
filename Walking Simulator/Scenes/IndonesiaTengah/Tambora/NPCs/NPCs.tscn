@@ -1,12 +1,6 @@
-[gd_scene load_steps=11 format=3 uid="uid://b5jrqsg6si3pp"]
+[gd_scene load_steps=5 format=3 uid="uid://b5jrqsg6si3pp"]
 
 [ext_resource type="Script" uid="uid://cb82diggp6ccs" path="res://Systems/NPCs/CulturalNPC.gd" id="1_y16ej"]
-[ext_resource type="DialogueResource" uid="uid://5olkldtcni5j" path="res://Resources/Dialogues/Tambora/DrHeinrichDialogue.tres" id="2_dr_heinrich"]
-[ext_resource type="DialogueResource" uid="uid://dhwany3vxht17" path="res://Resources/Dialogues/Tambora/DrSariDialogue.tres" id="3_dr_sari"]
-[ext_resource type="DialogueResource" uid="uid://cwoe4sirebq7c" path="res://Resources/Dialogues/Tambora/PakBudiDialogue.tres" id="4_pak_budi"]
-[ext_resource type="DialogueResource" uid="uid://dnd44sb4jj4d4" path="res://Resources/Dialogues/Tambora/IbuMayaDialogue.tres" id="5_ibu_maya"]
-[ext_resource type="DialogueResource" uid="uid://cufwqmehpkynn" path="res://Resources/Dialogues/Tambora/DrAhmadDialogue.tres" id="6_dr_ahmad"]
-[ext_resource type="DialogueResource" uid="uid://dy41vqsrydj8h" path="res://Resources/Dialogues/Tambora/PakKarsaDialogue.tres" id="7_pak_karsa"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cyrwb"]
 albedo_color = Color(0.8, 0.2, 0.2, 1)
@@ -25,7 +19,6 @@ script = ExtResource("1_y16ej")
 npc_name = "Dr. Heinrich"
 cultural_region = "Indonesia Tengah"
 npc_type = "Historian"
-dialogue_resource = ExtResource("2_dr_heinrich")
 
 [node name="NPCModel" type="CSGCylinder3D" parent="DrHeinrich"]
 material = SubResource("StandardMaterial3D_cyrwb")
@@ -46,7 +39,6 @@ script = ExtResource("1_y16ej")
 npc_name = "Dr. Sari"
 cultural_region = "Indonesia Tengah"
 npc_type = "Historian"
-dialogue_resource = ExtResource("3_dr_sari")
 
 [node name="NPCModel" type="CSGCylinder3D" parent="DrSari"]
 material = SubResource("StandardMaterial3D_cyrwb")
@@ -66,7 +58,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -47.0934, 1, -95.1033)
 script = ExtResource("1_y16ej")
 npc_name = "Pak Budi"
 cultural_region = "Indonesia Tengah"
-dialogue_resource = ExtResource("4_pak_budi")
 
 [node name="NPCModel" type="CSGCylinder3D" parent="PakBudi"]
 material = SubResource("StandardMaterial3D_cyrwb")
@@ -86,7 +77,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100, 1, -150)
 script = ExtResource("1_y16ej")
 npc_name = "Ibu Maya"
 cultural_region = "Indonesia Tengah"
-dialogue_resource = ExtResource("5_ibu_maya")
 
 [node name="NPCModel" type="CSGCylinder3D" parent="IbuMaya"]
 material = SubResource("StandardMaterial3D_cyrwb")
@@ -107,7 +97,6 @@ script = ExtResource("1_y16ej")
 npc_name = "Dr. Ahmad"
 cultural_region = "Indonesia Tengah"
 npc_type = "Historian"
-dialogue_resource = ExtResource("6_dr_ahmad")
 
 [node name="NPCModel" type="CSGCylinder3D" parent="DrAhmad"]
 material = SubResource("StandardMaterial3D_cyrwb")
@@ -127,7 +116,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -250)
 script = ExtResource("1_y16ej")
 npc_name = "Pak Karsa"
 cultural_region = "Indonesia Tengah"
-dialogue_resource = ExtResource("7_pak_karsa")
 
 [node name="NPCModel" type="CSGCylinder3D" parent="PakKarsa"]
 material = SubResource("StandardMaterial3D_cyrwb")

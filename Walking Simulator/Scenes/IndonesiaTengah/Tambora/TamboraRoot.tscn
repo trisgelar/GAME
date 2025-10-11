@@ -31,6 +31,7 @@ script = ExtResource("1_region_controller")
 [node name="Terrain3DManager" parent="." instance=ExtResource("3_terrain")]
 
 [node name="MountainPath" type="Node3D" parent="."]
+visible = false
 
 [node name="Path1" type="CSGBox3D" parent="MountainPath"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, -16.7285)
@@ -46,6 +47,7 @@ size = Vector3(3, 0.2, 10)
 
 [node name="HistoricalMarkers" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1790.73)
+visible = false
 
 [node name="Marker1" type="CSGCylinder3D" parent="HistoricalMarkers"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -15)
@@ -61,6 +63,7 @@ material = SubResource("StandardMaterial3D_marker")
 
 [node name="CulturalArtifacts" parent="." instance=ExtResource("4_artifacts")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1709.36)
+visible = false
 
 [node name="SimpleCameraManager" type="Node3D" parent="."]
 script = ExtResource("12_camera_manager")
